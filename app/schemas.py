@@ -63,6 +63,14 @@ class UsuarioBase(BaseModel):
 class UsuarioCreate(UsuarioBase):
     password: str  # Solo al crear se pide el password
 
+class UsuarioUpdate(BaseModel):
+    nombre: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    id_sucursal: Optional[int] = None
+    rol: Optional[TipoRol] = None
+    estado: Optional[bool] = None
+
 class UsuarioResponse(UsuarioBase):
     id_usuario: int
     # NO incluimos password en la respuesta
