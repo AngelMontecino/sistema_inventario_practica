@@ -5,7 +5,7 @@ from jose import jwt
 from passlib.context import CryptContext
 
 # Configuración JWT
-# En producción, esto debería ir en .env
+# se encuentra en el .env
 SECRET_KEY = "supersecreto_cambiar_en_produccion" 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
