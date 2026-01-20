@@ -24,6 +24,13 @@ def iniciar_sesion(form_data: OAuth2PasswordRequestForm = Depends(), db: Session
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Validar si el usuario está activo
+    if not user.estado:
+         raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Usuario inactivo",
+        )
+    
     # Crear Token
     access_token_expires = timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
