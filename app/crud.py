@@ -125,6 +125,41 @@ def update_usuario(db: Session, usuario_id: int, usuario_update: schemas.Usuario
 def get_categorias(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Categoria).offset(skip).limit(limit).all()
 
+def get_categoria(db: Session, categoria_id: int):
+    return db.query(models.Categoria).filter(models.Categoria.id_categoria == categoria_id).first()
+
+def get_categorias_arbol(db: Session):
+
+    return db.query(models.Categoria).filter(models.Categoria.id_padre == None).all()
+
+def get_subcategorias(db: Session, categoria_id: int):
+    return db.query(models.Categoria).filter(models.Categoria.id_padre == categoria_id).all()
+
+def _tiene_productos_recursivo(categoria: models.Categoria) -> bool:
+    # Verificar si la categoría actual tiene productos
+    if categoria.productos:
+        return True
+    
+    # Verificar recursivamente en las hijas
+    for hija in categoria.hijas:
+        if _tiene_productos_recursivo(hija):
+            return True
+            
+    return False
+
+def delete_categoria(db: Session, categoria_id: int):
+    categoria = db.query(models.Categoria).filter(models.Categoria.id_categoria == categoria_id).first()
+    if not categoria:
+        return None
+    
+    # Verificar recursivamente si tiene productos en toda la rama
+    if _tiene_productos_recursivo(categoria):
+        return False # Indica que no se puede borrar por integridad
+        
+    db.delete(categoria)
+    db.commit()
+    return True
+
 def create_categoria(db: Session, categoria: schemas.CategoriaCreate):
     # Convertir 0 a None para evitar error de FK si el frontend envía 0
     cat_data = categoria.model_dump()
@@ -161,9 +196,17 @@ def get_productos(
             (models.Producto.nombre.ilike(f"%{busqueda}%")) | 
             (models.Producto.codigo_barras.ilike(f"%{busqueda}%"))
         )
+    if busqueda:
+        query = query.filter(
+            (models.Producto.nombre.ilike(f"%{busqueda}%")) | 
+            (models.Producto.codigo_barras.ilike(f"%{busqueda}%"))
+        )
     return query.offset(skip).limit(limit).all()
 
-def update_producto(db: Session, producto_id: int, producto_update: schemas.ProductoCreate):
+def get_producto_by_codigo(db: Session, codigo: str):
+    return db.query(models.Producto).filter(models.Producto.codigo_barras == codigo).first()
+
+def update_producto(db: Session, producto_id: int, producto_update: schemas.ProductoUpdate):
     db_producto = get_producto(db, producto_id)
     if not db_producto:
         return None
@@ -178,6 +221,12 @@ def update_producto(db: Session, producto_id: int, producto_update: schemas.Prod
     return db_producto
 
 def create_producto(db: Session, producto: schemas.ProductoCreate):
+    # Validar código de barras si existe
+    if producto.codigo_barras:
+        existe = get_producto_by_codigo(db, producto.codigo_barras)
+        if existe:
+            return None 
+
     db_producto = models.Producto(**producto.model_dump())
     db.add(db_producto)
     db.commit()

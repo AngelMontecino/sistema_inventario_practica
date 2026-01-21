@@ -118,6 +118,20 @@ class ProductoBase(BaseModel):
 class ProductoCreate(ProductoBase):
     pass
 
+class ProductoUpdate(BaseModel):
+    nombre: Optional[str] = None
+    codigo_barras: Optional[str] = None
+    id_categoria: Optional[int] = None
+    descripcion: Optional[str] = None
+    costo_neto: Optional[Decimal] = Field(default=None, decimal_places=2)
+    precio_venta: Optional[Decimal] = Field(default=None, decimal_places=2)
+    unidad_medida: Optional[str] = None
+
+class ActualizacionPrecioProducto(BaseModel):
+    id_producto: int
+    costo_neto: Optional[Decimal] = None
+    precio_venta: Optional[Decimal] = None
+
 class ProductoResponse(ProductoBase):
     id_producto: int
     model_config = ConfigDict(from_attributes=True)

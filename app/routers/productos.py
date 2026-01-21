@@ -12,7 +12,6 @@ router = APIRouter(prefix="/productos", tags=["Productos y Categorías"])
 
 # CATEGORIAS
 
-
 @router.post("/categorias/", response_model=schemas.CategoriaResponse, status_code=status.HTTP_201_CREATED)
 def crear_categoria(
     categoria: schemas.CategoriaCreate, 
@@ -22,9 +21,30 @@ def crear_categoria(
     return crud.create_categoria(db=db, categoria=categoria)
 
 @router.get("/categorias/", response_model=List[schemas.CategoriaResponse])
-def listar_categorias(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    # TODO: Implementar árbol jerárquico si se requiere
-    return crud.get_categorias(db, skip=skip, limit=limit)
+def listar_categorias(db: Session = Depends(get_db)):
+    # Devuelve el árbol completo (categorías y subcategorías)
+    return crud.get_categorias_arbol(db)
+
+@router.get("/categorias/{categoria_id}", response_model=schemas.CategoriaResponse)
+def obtener_categoria(categoria_id: int, db: Session = Depends(get_db)):
+    # Devuelve categoría específica con sus hijas
+    db_categoria = crud.get_categoria(db, categoria_id=categoria_id)
+    if not db_categoria:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    return db_categoria
+
+@router.delete("/categorias/{categoria_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_categoria(
+    categoria_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    resultado = crud.delete_categoria(db, categoria_id=categoria_id)
+    if resultado is None:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    if resultado is False:
+        raise HTTPException(status_code=400, detail="No se puede eliminar la categoría porque tiene productos asociados")
+    return None
 
 
 # PRODUCTOS
@@ -38,7 +58,7 @@ def crear_producto(
 ):
     # Validar código de barras único
     if producto.codigo_barras:
-        existe = db.query(models.Producto).filter(models.Producto.codigo_barras == producto.codigo_barras).first()
+        existe = crud.get_producto_by_codigo(db, producto.codigo_barras)
         if existe:
             raise HTTPException(status_code=400, detail="El código de barras ya existe")
             
@@ -64,7 +84,7 @@ def obtener_producto(producto_id: int, db: Session = Depends(get_db)):
 @router.put("/{producto_id}", response_model=schemas.ProductoResponse)
 def actualizar_producto(
     producto_id: int, 
-    producto_update: schemas.ProductoCreate, 
+    producto_update: schemas.ProductoUpdate, 
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
