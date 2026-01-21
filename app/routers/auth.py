@@ -42,22 +42,17 @@ def iniciar_sesion(form_data: OAuth2PasswordRequestForm = Depends(), db: Session
 @router.post("/sucursales/", response_model=schemas.SucursalResponse, status_code=status.HTTP_201_CREATED)
 def crear_sucursal(
     sucursal: schemas.SucursalCreate, 
-    db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
-    # Solo admin debería crear sucursales
-    if current_user.rol != models.TipoRol.ADMIN:
-         raise HTTPException(status_code=403, detail="No tienes permisos para crear sucursales")
+
     return crud.create_sucursal(db=db, sucursal=sucursal)
 
 @router.post("/usuarios/", response_model=schemas.UsuarioResponse, status_code=status.HTTP_201_CREATED)
 def crear_usuario(
     usuario: schemas.UsuarioCreate, 
-    db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    db: Session = Depends(get_db)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
-         raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
+   
 
     db_usuario = crud.get_usuario_by_email(db, email=usuario.email)
     if db_usuario:
