@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
 from app import models, schemas, security
 
 
@@ -231,4 +232,118 @@ def create_producto(db: Session, producto: schemas.ProductoCreate):
     db.add(db_producto)
     db.commit()
     db.refresh(db_producto)
+    db.refresh(db_producto)
     return db_producto
+
+
+# CLIENTE / PROVEEDOR
+
+def get_tercero(db: Session, tercero_id: int):
+    return db.query(models.ClienteProveedor).filter(models.ClienteProveedor.id_tercero == tercero_id).first()
+
+def get_tercero_by_rut(db: Session, rut: str):
+    return db.query(models.ClienteProveedor).filter(models.ClienteProveedor.rut == rut).first()
+
+def get_terceros(
+    db: Session, 
+    skip: int = 0, 
+    limit: int = 100, 
+    rut: str = None, 
+    rol: str = None, 
+    busqueda: str = None
+):
+    query = db.query(models.ClienteProveedor)
+    
+    if rut:
+        # Búsqueda exacta por RUT para validación rápida
+        query = query.filter(models.ClienteProveedor.rut == rut)
+    
+    if rol:
+        if rol.lower() == "cliente":
+            query = query.filter(models.ClienteProveedor.es_cliente == True)
+        elif rol.lower() == "proveedor":
+            query = query.filter(models.ClienteProveedor.es_proveedor == True)
+            
+    if busqueda:
+        # Búsqueda por nombre
+        query = query.filter(models.ClienteProveedor.nombre.ilike(f"%{busqueda}%"))
+        
+    
+    return query.offset(skip).limit(limit).all()
+
+def create_tercero(db: Session, tercero: schemas.ClienteProveedorCreate):
+    db_tercero = models.ClienteProveedor(**tercero.model_dump())
+    db.add(db_tercero)
+    db.commit()
+    db.refresh(db_tercero)
+    return db_tercero
+
+def update_tercero(db: Session, tercero_id: int, tercero_update: schemas.ClienteProveedorUpdate):
+    db_tercero = get_tercero(db, tercero_id)
+    if not db_tercero:
+        return None
+        
+    update_data = tercero_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_tercero, key, value)
+        
+    db.add(db_tercero)
+    db.commit()
+    db.refresh(db_tercero)
+    return db_tercero
+
+
+# INVENTARIO
+
+def get_inventario(db: Session, inventario_id: int):
+    return db.query(models.Inventario).filter(models.Inventario.id_inventario == inventario_id).first()
+
+def get_inventario_by_sucursal_producto(db: Session, sucursal_id: int, producto_id: int):
+    return db.query(models.Inventario).filter(
+        models.Inventario.id_sucursal == sucursal_id,
+        models.Inventario.id_producto == producto_id
+    ).first()
+
+def get_inventarios(
+    db: Session, 
+    skip: int = 0, 
+    limit: int = 100, 
+    sucursal_id: int = None, 
+    alerta_stock: bool = False
+):
+    query = db.query(models.Inventario).options(joinedload(models.Inventario.producto))
+    
+    if sucursal_id:
+        query = query.filter(models.Inventario.id_sucursal == sucursal_id)
+        
+    if alerta_stock:
+        # Stock crítico: cantidad <= stock_minimo
+        query = query.filter(models.Inventario.cantidad <= models.Inventario.stock_minimo)
+        
+    return query.offset(skip).limit(limit).all()
+
+def create_inventario(db: Session, inventario: schemas.InventarioCreate):
+    # Verificar si ya existe relación sucursal-producto
+    existe = get_inventario_by_sucursal_producto(db, inventario.id_sucursal, inventario.id_producto)
+    if existe:
+        return None # O manejar lógica de negocio diferente
+        
+    db_inventario = models.Inventario(**inventario.model_dump())
+    db.add(db_inventario)
+    db.commit()
+    db.refresh(db_inventario)
+    return db_inventario
+
+def update_inventario(db: Session, inventario_id: int, inventario_update: schemas.InventarioUpdate):
+    db_inventario = get_inventario(db, inventario_id)
+    if not db_inventario:
+        return None
+        
+    update_data = inventario_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_inventario, key, value)
+        
+    db.add(db_inventario)
+    db.commit()
+    db.refresh(db_inventario)
+    return db_inventario

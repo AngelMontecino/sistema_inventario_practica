@@ -98,6 +98,15 @@ class ClienteProveedorBase(BaseModel):
 class ClienteProveedorCreate(ClienteProveedorBase):
     pass
 
+class ClienteProveedorUpdate(BaseModel):
+    nombre: Optional[str] = None
+    rut: Optional[str] = None
+    direccion: Optional[str] = None
+    telefono: Optional[str] = None
+    email: Optional[EmailStr] = None
+    es_cliente: Optional[bool] = None
+    es_proveedor: Optional[bool] = None
+
 class ClienteProveedorResponse(ClienteProveedorBase):
     id_tercero: int
     model_config = ConfigDict(from_attributes=True)
@@ -150,10 +159,17 @@ class InventarioCreate(InventarioBase):
     id_sucursal: int
     id_producto: int
 
+class InventarioUpdate(BaseModel):
+    cantidad: Optional[int] = None
+    ubicacion_especifica: Optional[str] = None
+    stock_minimo: Optional[int] = None
+    stock_maximo: Optional[int] = None
+
 class InventarioResponse(InventarioBase):
     id_inventario: int
     id_sucursal: int
     id_producto: int
+    producto: Optional[ProductoResponse] = None # Para mostrar info del producto en listados
     model_config = ConfigDict(from_attributes=True)
 
 
