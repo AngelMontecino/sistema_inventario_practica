@@ -39,13 +39,7 @@ def iniciar_sesion(form_data: OAuth2PasswordRequestForm = Depends(), db: Session
     
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.post("/sucursales/", response_model=schemas.SucursalResponse, status_code=status.HTTP_201_CREATED)
-def crear_sucursal(
-    sucursal: schemas.SucursalCreate, 
-    db: Session = Depends(get_db)
-):
 
-    return crud.create_sucursal(db=db, sucursal=sucursal)
 
 @router.post("/usuarios/", response_model=schemas.UsuarioResponse, status_code=status.HTTP_201_CREATED)
 def crear_usuario(

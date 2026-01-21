@@ -45,6 +45,12 @@ class SucursalBase(BaseModel):
 class SucursalCreate(SucursalBase):
     pass
 
+class SucursalUpdate(BaseModel):
+    nombre: Optional[str] = None
+    direccion: Optional[str] = None
+    telefono: Optional[str] = None
+    es_principal: Optional[bool] = None
+
 class SucursalResponse(SucursalBase):
     id_sucursal: int
     model_config = ConfigDict(from_attributes=True)
