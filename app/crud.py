@@ -347,3 +347,97 @@ def update_inventario(db: Session, inventario_id: int, inventario_update: schema
     db.commit()
     db.refresh(db_inventario)
     return db_inventario
+
+
+# DOCUMENTOS
+
+def get_documento(db: Session, documento_id: int):
+    return db.query(models.Documento).filter(models.Documento.id_documento == documento_id).first()
+
+def create_documento(db: Session, documento: schemas.DocumentoCreate):
+    # Generar folio simple basado en timestamp para las pruebas
+    import time
+    folio = f"{documento.tipo_documento.value[0]}-{int(time.time())}"
+    
+    db_documento = models.Documento(
+        id_sucursal=documento.id_sucursal,
+        id_tercero=documento.id_tercero,
+        id_usuario=documento.id_usuario,
+        tipo_operacion=documento.tipo_operacion,
+        tipo_documento=documento.tipo_documento,
+        folio=folio,
+        estado_pago=documento.estado_pago,
+        observaciones=documento.observaciones
+    )
+    db.add(db_documento)
+    db.flush() 
+    
+    # Procesar detalles y stock
+    for detalle in documento.detalles:
+        # Verificar Inventario
+        inventario = get_inventario_by_sucursal_producto(db, documento.id_sucursal, detalle.id_producto)
+        
+        # Logica para VENTA
+        if documento.tipo_operacion == models.TipoOperacion.VENTA:
+            if not inventario or inventario.cantidad < detalle.cantidad:
+                db.rollback()
+                return {"error": f"Stock insuficiente para producto ID {detalle.id_producto}"}
+            
+            # Descontar stock
+            inventario.cantidad -= detalle.cantidad
+            
+        # Logica para COMPRA
+        elif documento.tipo_operacion == models.TipoOperacion.COMPRA:
+            if not inventario:
+                # Si no existe inventario, crearlo (para pruebas)
+                inventario = models.Inventario(
+                    id_sucursal=documento.id_sucursal,
+                    id_producto=detalle.id_producto,
+                    cantidad=0,
+                    ubicacion_especifica="Bodega General" 
+                )
+                db.add(inventario)
+                db.flush()
+            
+            # Aumentar stock
+            inventario.cantidad += detalle.cantidad
+            
+        # Crear detalle
+        db_detalle = models.DetalleDocumento(
+            id_documento=db_documento.id_documento,
+            id_producto=detalle.id_producto,
+            cantidad=detalle.cantidad,
+            precio_unitario=detalle.precio_unitario,
+            descuento=detalle.descuento
+        )
+        db.add(db_detalle)
+        
+    db.commit()
+    db.refresh(db_documento)
+    return db_documento
+
+def anular_documento(db: Session, documento_id: int):
+    documento = get_documento(db, documento_id)
+    if not documento:
+        return None
+    
+    if documento.estado_pago == models.EstadoPago.ANULADO:
+        return documento # Ya anulado
+        
+    # Revertir Stock
+    for detalle in documento.detalles:
+        inventario = get_inventario_by_sucursal_producto(db, documento.id_sucursal, detalle.id_producto)
+        if inventario:
+            if documento.tipo_operacion == models.TipoOperacion.VENTA:
+                # Devolver stock
+                inventario.cantidad += detalle.cantidad
+            elif documento.tipo_operacion == models.TipoOperacion.COMPRA:
+                # Restar stock (corrección)
+                # OJO: Podría quedar negativo si ya se vendió, pero asumimos corrección contable
+                inventario.cantidad -= detalle.cantidad
+    
+    documento.estado_pago = models.EstadoPago.ANULADO
+    db.add(documento)
+    db.commit()
+    db.refresh(documento)
+    return documento
