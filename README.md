@@ -60,8 +60,6 @@ app/
 ├── main.py          # Punto de entrada
 ├── models.py        # Modelos SQLAlchemy
 ├── routers/         # Endpoints de la API
-│   ├── auth.py      # Login y Usuarios
-│   └── productos.py # Productos y Categorías
 ├── schemas.py       # Esquemas Pydantic
 └── security.py      # Hashing y JWT
 ```
