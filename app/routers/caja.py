@@ -28,7 +28,16 @@ def cerrar_caja(
     """
     Registra CIERRE de caja y retorna cuadratura.
     """
-    return crud.cerrar_caja(db=db, sucursal_id=current_user.id_sucursal, usuario_id=current_user.id_usuario, monto_real=cierre_data.monto_real)
+    resultado = crud.cerrar_caja(
+        db=db, 
+        sucursal_id=current_user.id_sucursal, 
+        usuario_id=current_user.id_usuario, 
+        monto_real=cierre_data.monto_real,
+        id_apertura=cierre_data.id_apertura
+    )
+    if isinstance(resultado, dict) and "error" in resultado:
+        raise HTTPException(status_code=400, detail=resultado["error"])
+    return resultado
 
 @router.get("/resumen", response_model=schemas.CajaResumenResponse)
 def obtener_resumen(

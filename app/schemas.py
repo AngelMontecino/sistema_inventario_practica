@@ -250,6 +250,7 @@ class CajaResumenResponse(BaseModel):
 
 class CierreCajaRequest(BaseModel):
     monto_real: Decimal = Field(decimal_places=2)
+    id_apertura: Optional[int] = None
 
 class CierreCajaResponse(CajaResumenResponse):
     monto_real: Decimal

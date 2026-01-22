@@ -492,6 +492,8 @@ def registrar_movimiento_caja(db: Session, movimiento: schemas.MovimientoCajaCre
             return {"error": "El documento asociado no existe."}
         if doc.id_sucursal != movimiento.id_sucursal:
              return {"error": "El documento asociado pertenece a otra sucursal."}
+        if doc.estado_pago == models.EstadoPago.ANULADO:
+             return {"error": "No se puede asociar un movimiento a un documento ANULADO."}
 
     db_mov = models.MovimientosCaja(**movimiento.model_dump())
     db.add(db_mov)
@@ -499,10 +501,22 @@ def registrar_movimiento_caja(db: Session, movimiento: schemas.MovimientoCajaCre
     db.refresh(db_mov)
     return db_mov
 
-def obtener_resumen_caja(db: Session, sucursal_id: int):
-    #  Buscar última apertura
-    ultimo = get_ultimo_cierre_o_apertura(db, sucursal_id)
+def obtener_resumen_caja(db: Session, sucursal_id: int, id_apertura: Optional[int] = None):
+    # Buscar última apertura o la específica solicitada
+    ultimo = None
+    if id_apertura:
+        ultimo = db.query(models.MovimientosCaja).filter(
+            models.MovimientosCaja.id_movimiento == id_apertura,
+            models.MovimientosCaja.tipo == models.TipoMovimientoCaja.APERTURA,
+            models.MovimientosCaja.id_sucursal == sucursal_id
+        ).first()
+        if not ultimo:
+            return {"error": "Apertura no encontrada o no pertenece a la sucursal"}
+    else:
+        ultimo = get_ultimo_cierre_o_apertura(db, sucursal_id)
+
     if not ultimo or ultimo.tipo == models.TipoMovimientoCaja.CIERRE:
+        # No hay caja abierta
         return {
             "saldo_inicial": 0,
             "ingresos_ventas": 0,
@@ -512,7 +526,32 @@ def obtener_resumen_caja(db: Session, sucursal_id: int):
             "saldo_teorico": 0
         }
     
-    return calcular_resumen_periodo(db, sucursal_id, fecha_apertura, datetime.now(), saldo_inicial)
+    # Calcular hasta AHORA
+    return calcular_resumen_periodo(db, sucursal_id, ultimo.fecha, datetime.now(), ultimo.monto)
+
+def cerrar_caja(db: Session, sucursal_id: int, usuario_id: int, monto_real: float, id_apertura: Optional[int] = None):
+    resumen = obtener_resumen_caja(db, sucursal_id, id_apertura=id_apertura)
+    if "error" in resumen:
+        return resumen
+
+    # Registrar cierre
+    cierre = models.MovimientosCaja(
+        id_sucursal=sucursal_id,
+        id_usuario=usuario_id,
+        tipo=models.TipoMovimientoCaja.CIERRE,
+        monto=monto_real, 
+        descripcion=f"Cierre de Caja {id_apertura if id_apertura else 'General'}. Diferencia: {float(monto_real) - float(resumen['saldo_teorico'])}"
+    )
+    db.add(cierre)
+    db.commit()
+    db.refresh(cierre)
+
+    return {
+        **resumen,
+        "monto_real": monto_real,
+        "diferencia": float(monto_real) - float(resumen['saldo_teorico'])
+    }
+
 
 def calcular_resumen_periodo(db: Session, sucursal_id: int, fecha_inicio: datetime, fecha_fin: datetime, saldo_inicial: float):
     #  Sumar Ventas (Ingresos)
@@ -622,23 +661,4 @@ def get_reporte_caja_historico(db, fecha_inicio: datetime, fecha_fin: datetime, 
         
     return reporte
 
-def cerrar_caja(db: Session, sucursal_id: int, usuario_id: int, monto_real: float):
-    resumen = obtener_resumen_caja(db, sucursal_id)
-    
-    # Registrar cierre
-    cierre = models.MovimientosCaja(
-        id_sucursal=sucursal_id,
-        id_usuario=usuario_id,
-        tipo=models.TipoMovimientoCaja.CIERRE,
-        monto=monto_real, # Guardamos lo que contó el usuario
-        descripcion=f"Cierre de Caja. Diferencia: {float(monto_real) - float(resumen['saldo_teorico'])}"
-    )
-    db.add(cierre)
-    db.commit()
-    db.refresh(cierre)
-    
-    return {
-        **resumen,
-        "monto_real": monto_real,
-        "diferencia": float(monto_real) - float(resumen['saldo_teorico'])
-    }
+
