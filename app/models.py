@@ -43,6 +43,8 @@ class EstadoPago(str, enum.Enum):
 class TipoMovimientoCaja(str, enum.Enum):
     INGRESO = "INGRESO"
     EGRESO = "EGRESO"
+    APERTURA = "APERTURA"
+    CIERRE = "CIERRE"
 
 
 

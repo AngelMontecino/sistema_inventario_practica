@@ -240,6 +240,32 @@ class MovimientoCajaResponse(MovimientoCajaBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+class CajaResumenResponse(BaseModel):
+    saldo_inicial: Decimal
+    ingresos_ventas: Decimal
+    egresos_compras: Decimal
+    ingresos_extra: Decimal
+    egresos_extra: Decimal
+    saldo_teorico: Decimal
+
+class CierreCajaRequest(BaseModel):
+    monto_real: Decimal = Field(decimal_places=2)
+
+class CierreCajaResponse(CajaResumenResponse):
+    monto_real: Decimal
+    diferencia: Decimal
+
+class ReporteCajaItem(CajaResumenResponse):
+    id_apertura: int
+    fecha_apertura: datetime
+    fecha_cierre: Optional[datetime] = None
+    usuario_apertura: str
+    usuario_cierre: Optional[str] = None
+    sucursal: str
+    estado: str # "ABIERTA" o "CERRADA"
+    monto_real: Optional[Decimal] = None
+    diferencia: Optional[Decimal] = None
+
 
 # AUTH / TOKEN SCHEMAS
 
