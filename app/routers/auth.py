@@ -44,8 +44,11 @@ def iniciar_sesion(form_data: OAuth2PasswordRequestForm = Depends(), db: Session
 @router.post("/usuarios/", response_model=schemas.UsuarioResponse, status_code=status.HTTP_201_CREATED)
 def crear_usuario(
     usuario: schemas.UsuarioCreate, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_active_user)
 ):
+    if current_user.rol != models.TipoRol.ADMIN:
+        raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
    
 
     db_usuario = crud.get_usuario_by_email(db, email=usuario.email)
@@ -79,8 +82,12 @@ def actualizar_usuario(
     # Vendedor solo se puede editar a sí mismo
     elif current_user.id_usuario == usuario_id:
         # Validar que no intente cambiar campos sensibles
-        if usuario_update.rol is not None or usuario_update.id_sucursal is not None or usuario_update.estado is not None:
-             raise HTTPException(status_code=403, detail="No tienes permisos para cambiar tu rol, sucursal o estado")
+        if usuario_update.rol is not None:
+             raise HTTPException(status_code=403, detail="No tienes permisos para cambiar tu rol")
+        if usuario_update.id_sucursal is not None:
+             raise HTTPException(status_code=403, detail="No tienes permisos para cambiar tu sucursal")
+        if usuario_update.estado is not None:
+             raise HTTPException(status_code=403, detail="No tienes permisos para cambiar tu estado")
     else:
         # Vendedor intentando editar a otro
         raise HTTPException(status_code=403, detail="No tienes permisos para editar este usuario")

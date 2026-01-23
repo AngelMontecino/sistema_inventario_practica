@@ -13,6 +13,8 @@ def inicializar_stock(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
+    if current_user.rol != models.TipoRol.ADMIN:
+        raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     nuevo_inventario = crud.create_inventario(db=db, inventario=inventario)
     if not nuevo_inventario:
          raise HTTPException(status_code=400, detail="El producto ya está registrado en esta sucursal")
@@ -44,6 +46,8 @@ def ajustar_stock(
     """
     Ajuste manual de stock, ubicación o niveles de alerta.
     """
+    if current_user.rol != models.TipoRol.ADMIN:
+        raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     db_inventario = crud.update_inventario(db, inventario_id=inventario_id, inventario_update=inventario_update)
     if not db_inventario:
         raise HTTPException(status_code=404, detail="Registro de inventario no encontrado")

@@ -662,3 +662,5 @@ def get_reporte_caja_historico(db, fecha_inicio: datetime, fecha_fin: datetime, 
     return reporte
 
 
+def get_movimiento(db: Session, movimiento_id: int):
+    return db.query(models.MovimientosCaja).filter(models.MovimientosCaja.id_movimiento == movimiento_id).first()

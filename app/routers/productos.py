@@ -18,6 +18,8 @@ def crear_categoria(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
+    if current_user.rol != models.TipoRol.ADMIN:
+        raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     return crud.create_categoria(db=db, categoria=categoria)
 
 @router.get("/categorias/", response_model=List[schemas.CategoriaResponse])
@@ -39,6 +41,8 @@ def eliminar_categoria(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
+    if current_user.rol != models.TipoRol.ADMIN:
+        raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     resultado = crud.delete_categoria(db, categoria_id=categoria_id)
     if resultado is None:
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
@@ -56,6 +60,8 @@ def crear_producto(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
+    if current_user.rol != models.TipoRol.ADMIN:
+        raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     # Validar código de barras único
     if producto.codigo_barras:
         existe = crud.get_producto_by_codigo(db, producto.codigo_barras)
@@ -88,6 +94,8 @@ def actualizar_producto(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
+    if current_user.rol != models.TipoRol.ADMIN:
+        raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     db_producto = crud.update_producto(db, producto_id=producto_id, producto_update=producto_update)
     if db_producto is None:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
