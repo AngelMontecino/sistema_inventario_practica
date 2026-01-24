@@ -183,7 +183,7 @@ class InventarioAgrupadoResponse(BaseModel):
 
 class DetalleDocumentoBase(BaseModel):
     cantidad: int
-    precio_unitario: Decimal = Field(decimal_places=2)
+    precio_unitario: Optional[Decimal] = Field(default=None, decimal_places=2)
     descuento: Decimal = Field(default=0.00, decimal_places=2)
 
 class DetalleDocumentoCreate(DetalleDocumentoBase):
@@ -220,6 +220,7 @@ class DocumentoResponse(DocumentoBase):
     fecha_emision: datetime
     
     detalles: List[DetalleDocumentoResponse] = []
+    total: Optional[Decimal] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -229,7 +230,7 @@ class DocumentoResponse(DocumentoBase):
 
 class MovimientoCajaBase(BaseModel):
     tipo: TipoMovimientoCaja
-    monto: Decimal = Field(decimal_places=2)
+    monto: Optional[Decimal] = Field(default=None, decimal_places=2)
     descripcion: Optional[str] = None
 
 class MovimientoCajaCreate(MovimientoCajaBase):

@@ -450,6 +450,16 @@ def create_documento(db: Session, documento: schemas.DocumentoCreate):
         # Verificar Inventario
         inventario = get_inventario_by_sucursal_producto(db, documento.id_sucursal, detalle.id_producto)
         
+        # Obtener precio del producto si no se envió
+        producto_info = get_producto(db, detalle.id_producto)
+        if not producto_info:
+             db.rollback()
+             return {"error": f"Producto ID {detalle.id_producto} no encontrado"}
+
+        precio_final = detalle.precio_unitario
+        if precio_final is None:
+            precio_final = producto_info.precio_venta
+
         # Logica para VENTA
         if documento.tipo_operacion == models.TipoOperacion.VENTA:
             if not inventario or inventario.cantidad < detalle.cantidad:
@@ -480,7 +490,7 @@ def create_documento(db: Session, documento: schemas.DocumentoCreate):
             id_documento=db_documento.id_documento,
             id_producto=detalle.id_producto,
             cantidad=detalle.cantidad,
-            precio_unitario=detalle.precio_unitario,
+            precio_unitario=precio_final,
             descuento=detalle.descuento
         )
         db.add(db_detalle)
@@ -551,6 +561,7 @@ def registrar_movimiento_caja(db: Session, movimiento: schemas.MovimientoCajaCre
         return {"error": "Caja cerrada. Debe abrir caja antes de registrar movimientos."}
 
     # Validar Documento Asociado (Misma Sucursal)
+    monto_final = movimiento.monto
     if movimiento.id_documento_asociado:
         doc = get_documento(db, movimiento.id_documento_asociado)
         if not doc:
@@ -559,8 +570,19 @@ def registrar_movimiento_caja(db: Session, movimiento: schemas.MovimientoCajaCre
              return {"error": "El documento asociado pertenece a otra sucursal."}
         if doc.estado_pago == models.EstadoPago.ANULADO:
              return {"error": "No se puede asociar un movimiento a un documento ANULADO."}
+        
+        # monto de total del documento si no se especifica
+        if monto_final is None:
+            monto_final = doc.total # Usamos la propiedad calculada
+            
+    if monto_final is None:
+         return {"error": "Debe especificar un monto si no asocia un documento."}
 
-    db_mov = models.MovimientosCaja(**movimiento.model_dump())
+    # Crear objeto ignorando el campo monto del esquema si era None, usandolo en constructor
+    datos_mov = movimiento.model_dump()
+    datos_mov["monto"] = monto_final
+    
+    db_mov = models.MovimientosCaja(**datos_mov)
     db.add(db_mov)
     db.commit()
     db.refresh(db_mov)

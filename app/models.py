@@ -163,6 +163,16 @@ class Documento(Base):
     detalles: Mapped[List["DetalleDocumento"]] = relationship(back_populates="documento", cascade="all, delete-orphan")
     movimientos_caja: Mapped[List["MovimientosCaja"]] = relationship(back_populates="documento_asociado")
 
+    @property
+    def total(self):
+        total_doc = 0
+        for det in self.detalles:
+            # precio * cantidad * (1 - descuento/100)
+            # descuento es porcentaje 0-100
+            factor_descuento = (100 - det.descuento) / 100
+            total_doc += (det.precio_unitario * det.cantidad * factor_descuento)
+        return total_doc
+
 
 class DetalleDocumento(Base):
     __tablename__ = "detalle_documento"
