@@ -100,3 +100,22 @@ def actualizar_producto(
     if db_producto is None:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     return db_producto
+
+@router.delete("/{producto_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_producto(
+    producto_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    if current_user.rol != models.TipoRol.ADMIN:
+        raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
+        
+    resultado = crud.delete_producto(db, producto_id=producto_id)
+    if resultado is None:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    if resultado == "ConHistorial":
+         raise HTTPException(status_code=400, detail="No se puede eliminar: El producto tiene historial de movimientos")
+    if resultado == "ConStock":
+         raise HTTPException(status_code=400, detail="No se puede eliminar: El producto tiene stock físico > 0")
+         
+    return None

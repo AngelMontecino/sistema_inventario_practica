@@ -237,6 +237,28 @@ def create_producto(db: Session, producto: schemas.ProductoCreate):
     db.refresh(db_producto)
     return db_producto
 
+def delete_producto(db: Session, producto_id: int):
+    producto = get_producto(db, producto_id)
+    if not producto:
+        return None 
+        
+    # Validar historial
+    usos = db.query(models.DetalleDocumento).filter(models.DetalleDocumento.id_producto == producto_id).count()
+    if usos > 0:
+        return "ConHistorial" 
+        
+    # Validar stock físico
+    stock_total = db.query(func.sum(models.Inventario.cantidad)).filter(models.Inventario.id_producto == producto_id).scalar()
+    if stock_total and stock_total > 0:
+        return "ConStock"
+        
+    # Borrar inventarios vacíos (si existen)
+    db.query(models.Inventario).filter(models.Inventario.id_producto == producto_id).delete()
+    
+    db.delete(producto)
+    db.commit()
+    return True
+
 
 # CLIENTE / PROVEEDOR
 
@@ -300,11 +322,14 @@ def update_tercero(db: Session, tercero_id: int, tercero_update: schemas.Cliente
 def get_inventario(db: Session, inventario_id: int):
     return db.query(models.Inventario).filter(models.Inventario.id_inventario == inventario_id).first()
 
-def get_inventario_by_sucursal_producto(db: Session, sucursal_id: int, producto_id: int):
-    return db.query(models.Inventario).filter(
+def get_inventario_by_sucursal_producto(db: Session, sucursal_id: int, producto_id: int, ubicacion: str = None):
+    query = db.query(models.Inventario).filter(
         models.Inventario.id_sucursal == sucursal_id,
         models.Inventario.id_producto == producto_id
-    ).first()
+    )
+    if ubicacion:
+        query = query.filter(models.Inventario.ubicacion_especifica == ubicacion)
+    return query.first()
 
 def get_inventarios(
     db: Session, 
@@ -325,10 +350,15 @@ def get_inventarios(
     return query.offset(skip).limit(limit).all()
 
 def create_inventario(db: Session, inventario: schemas.InventarioCreate):
-    # Verificar si ya existe relación sucursal-producto
-    existe = get_inventario_by_sucursal_producto(db, inventario.id_sucursal, inventario.id_producto)
+    # Verificar si ya existe relación sucursal-producto-ubicacion
+    existe = get_inventario_by_sucursal_producto(
+        db, 
+        inventario.id_sucursal, 
+        inventario.id_producto, 
+        ubicacion=inventario.ubicacion_especifica
+    )
     if existe:
-        return None # O manejar lógica de negocio diferente
+        return None # Ya existe en esa ubicación
         
     db_inventario = models.Inventario(**inventario.model_dump())
     db.add(db_inventario)
@@ -349,6 +379,41 @@ def update_inventario(db: Session, inventario_id: int, inventario_update: schema
     db.commit()
     db.refresh(db_inventario)
     return db_inventario
+
+def delete_inventario(db: Session, inventario_id: int):
+    inv = get_inventario(db, inventario_id)
+    if not inv:
+        return None # Not found
+    
+    if inv.cantidad > 0:
+        return False # No eliminar con stock
+        
+    db.delete(inv)
+    db.commit()
+    return True
+
+def get_inventario_agrupado(db: Session, sucursal_id: int):
+    # Agrupar por producto y sumar cantidad
+    stats = db.query(
+        models.Inventario.id_producto,
+        models.Producto.nombre,
+        models.Producto.codigo_barras,
+        func.sum(models.Inventario.cantidad).label("total_cantidad")
+    ).join(models.Producto)\
+     .filter(models.Inventario.id_sucursal == sucursal_id)\
+     .group_by(models.Inventario.id_producto, models.Producto.nombre, models.Producto.codigo_barras)\
+     .all()
+    
+    # Formatear
+    resultado = []
+    for row in stats:
+        resultado.append({
+            "id_producto": row.id_producto,
+            "nombre": row.nombre,
+            "codigo_barras": row.codigo_barras,
+            "total_cantidad": row.total_cantidad
+        })
+    return resultado
 
 
 # DOCUMENTOS

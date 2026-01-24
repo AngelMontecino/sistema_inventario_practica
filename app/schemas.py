@@ -172,6 +172,12 @@ class InventarioResponse(InventarioBase):
     producto: Optional[ProductoResponse] = None # Para mostrar info del producto en listados
     model_config = ConfigDict(from_attributes=True)
 
+class InventarioAgrupadoResponse(BaseModel):
+    id_producto: int
+    nombre: str
+    codigo_barras: Optional[str] = None
+    total_cantidad: int
+
 
 # DETALLE DOCUMENTO SCHEMAS
 
