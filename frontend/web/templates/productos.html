@@ -1,43 +1,45 @@
-<!DOCTYPE html>
-<html>
+{% extends 'base.html' %}
 
-<head>
-    <title>Inventario</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% block title %}Productos - Sistema Inventario{% endblock %}
 
-<body class="container mt-5">
-    <h1> Lista de Productos</h1>
-    <table class="table table-striped mt-4">
-        <thead>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Listado de Productos</h1>
+    <button class="btn btn-primary">Nuevo Producto</button>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
             <tr>
+                <th>ID</th>
                 <th>Nombre</th>
-                <th>Código</th>
-                <th>Precio</th>
-                <th>Stock</th>
+                <th>Código Barras</th>
+                <th>Precio Venta</th>
+                <th>Unidad</th>
+                <th>Categoría ID</th>
             </tr>
         </thead>
         <tbody>
             {% for p in productos %}
             <tr>
+                <td>{{ p.id_producto }}</td>
                 <td>{{ p.nombre }}</td>
-                <td>{{ p.codigo_barras }}</td>
+                <td>{{ p.codigo_barras|default:"-" }}</td>
                 <td>${{ p.precio_venta }}</td>
-                <td>
-                    {% if p.inventarios %}
-                    {{ p.inventarios.0.cantidad }}
-                    {% else %}
-                    0
-                    {% endif %}
-                </td>
+                <td>{{ p.unidad_medida }}</td>
+                <td>{{ p.id_categoria|default:"-" }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4">No hay datos.</td>
+                <td colspan="6" class="text-center">No hay productos registrados.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-</body>
-
-</html>
+</div>
+{% endblock %}
