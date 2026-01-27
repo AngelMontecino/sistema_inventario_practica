@@ -122,6 +122,52 @@ def crear_producto(request):
 
     return render(request, "crear_producto.html", {"categorias": categorias, "error": error})
 
+@token_required
+def crear_categoria(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    categorias = []
+    error = None
+
+    if request.method == "POST":
+        try:
+            nombre = request.POST.get("nombre")
+            id_padre_str = request.POST.get("id_padre")
+            id_padre = int(id_padre_str) if id_padre_str else None
+            
+            payload = {
+                "nombre": nombre,
+                "id_padre": id_padre
+            }
+
+            response = httpx.post(f"{BACKEND_URL}/productos/categorias/", json=payload, headers=headers)
+            
+            if response.status_code == 201:
+                return redirect("lista_productos") 
+            elif response.status_code == 401:
+                request.session.flush()
+                return redirect("login")
+            else:
+                try:
+                    error = response.json().get("detail", "Error desconocido")
+                except:
+                    error = response.text
+
+        except httpx.RequestError as exc:
+            error = f"Error de conexión: {exc}"
+
+    # Logica GET: Obtener categorías para el select 
+    try:
+        cat_resp = httpx.get(f"{BACKEND_URL}/productos/categorias/", headers=headers)
+        if cat_resp.status_code == 200:
+            raw_cats = cat_resp.json()
+            categorias = _aplanar_categorias(raw_cats)
+    except httpx.RequestError:
+        pass
+
+    return render(request, "crear_categoria.html", {"categorias": categorias, "error": error})
+
 def _aplanar_categorias(categorias_raw, nivel=0):
     """Función recursiva para aplanar el árbol de categorías."""
     lista_plana = []
