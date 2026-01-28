@@ -168,6 +168,70 @@ def crear_categoria(request):
 
     return render(request, "crear_categoria.html", {"categorias": categorias, "error": error})
 
+    return render(request, "crear_categoria.html", {"categorias": categorias, "error": error})
+
+@token_required
+def editar_producto(request, pk):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    producto = {}
+    categorias = []
+    error = None
+
+    # Logica POST: actualizar
+    if request.method == "POST":
+        try:
+            payload = {
+                "nombre": request.POST.get("nombre"),
+                "codigo_barras": request.POST.get("codigo_barras") or None,
+                "precio_venta": float(request.POST.get("precio_venta", 0)),
+                "costo_neto": float(request.POST.get("costo_neto", 0)),
+                "unidad_medida": request.POST.get("unidad_medida"),
+                "id_categoria": int(request.POST.get("id_categoria")) if request.POST.get("id_categoria") else None,
+                "descripcion": request.POST.get("descripcion") or None,
+            }
+            
+            response = httpx.put(f"{BACKEND_URL}/productos/{pk}", json=payload, headers=headers)
+            
+            if response.status_code == 200:
+                return redirect("lista_productos")
+            elif response.status_code == 401:
+                request.session.flush()
+                return redirect("login")
+            else:
+                try:
+                    error = response.json().get("detail", "Error al actualizar")
+                except:
+                    error = response.text
+        except ValueError:
+            error = "Error en los datos numéricos."
+        except httpx.RequestError as exc:
+            error = f"Error de conexión: {exc}"
+
+    # Lógica GET: Cargar datos actuales y categorías
+    try:
+        # 1. Obtener producto
+        prod_resp = httpx.get(f"{BACKEND_URL}/productos/{pk}", headers=headers)
+        if prod_resp.status_code == 200:
+            producto = prod_resp.json()
+        elif prod_resp.status_code == 401:
+            request.session.flush()
+            return redirect("login")
+        else:
+            error = "No se pudo cargar el producto."
+
+        # 2. Obtener categorías
+        cat_resp = httpx.get(f"{BACKEND_URL}/productos/categorias/", headers=headers)
+        if cat_resp.status_code == 200:
+            raw_cats = cat_resp.json()
+            categorias = _aplanar_categorias(raw_cats)
+            
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "editar_producto.html", {"producto": producto, "categorias": categorias, "error": error})
+
 def _aplanar_categorias(categorias_raw, nivel=0):
     """Función recursiva para aplanar el árbol de categorías."""
     lista_plana = []

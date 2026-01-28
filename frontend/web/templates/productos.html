@@ -25,6 +25,7 @@
                 <th>Precio Venta</th>
                 <th>Unidad</th>
                 <th>Categoría ID</th>
+                <th class="text-center">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -36,6 +37,11 @@
                 <td>${{ p.precio_venta }}</td>
                 <td>{{ p.unidad_medida }}</td>
                 <td>{{ p.id_categoria|default:"-" }}</td>
+                <td class="text-center">
+                    <a href="{% url 'editar_producto' p.id_producto %}" class="btn btn-primary btn-sm" title="Editar">
+                        <i class="bi bi-pencil-square me-1"></i> Editar
+                    </a>
+                </td>
             </tr>
             {% empty %}
             <tr>
