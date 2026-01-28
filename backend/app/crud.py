@@ -353,12 +353,16 @@ def get_inventarios(
     skip: int = 0, 
     limit: int = 100, 
     sucursal_id: int = None, 
+    producto_id: int = None,
     alerta_stock: bool = False
 ):
     query = db.query(models.Inventario).options(joinedload(models.Inventario.producto))
     
     if sucursal_id:
         query = query.filter(models.Inventario.id_sucursal == sucursal_id)
+
+    if producto_id:
+        query = query.filter(models.Inventario.id_producto == producto_id)
         
     if alerta_stock:
         # Stock crítico: cantidad <= stock_minimo
@@ -409,16 +413,27 @@ def delete_inventario(db: Session, inventario_id: int):
     db.commit()
     return True
 
-def get_inventario_agrupado(db: Session, sucursal_id: int):
-    # Agrupar por producto y sumar cantidad
-    stats = db.query(
+def get_inventario_agrupado(db: Session, sucursal_id: int, busqueda: str = None):
+    # Base query
+    query = db.query(
         models.Inventario.id_producto,
         models.Producto.nombre,
         models.Producto.codigo_barras,
         func.sum(models.Inventario.cantidad).label("total_cantidad")
     ).join(models.Producto)\
-     .filter(models.Inventario.id_sucursal == sucursal_id)\
-     .group_by(models.Inventario.id_producto, models.Producto.nombre, models.Producto.codigo_barras)\
+     .filter(models.Inventario.id_sucursal == sucursal_id)
+
+    if busqueda:
+        from sqlalchemy import or_
+        query = query.filter(
+            or_(
+                models.Producto.nombre.ilike(f"%{busqueda}%"),
+                models.Producto.codigo_barras.ilike(f"%{busqueda}%")
+            )
+        )
+
+    # Agrupar por producto y sumar cantidad
+    stats = query.group_by(models.Inventario.id_producto, models.Producto.nombre, models.Producto.codigo_barras)\
      .all()
     
     # Formatear

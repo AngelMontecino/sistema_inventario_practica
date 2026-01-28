@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Inventario - Sistema Inventario{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h1 class="h3 fw-bold mb-0 text-gray-800">Inventario Global</h1>
+        <p class="text-muted small mb-0">Visualiza y gestiona el stock de tus productos por sucursal.</p>
+    </div>
+</div>
+
+<!-- Filtros y Búsqueda -->
+<div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-body p-4 bg-white rounded-4">
+        <form method="GET" class="row g-3 align-items-end">
+            <!-- Filtro Sucursal -->
+            <div class="col-md-4">
+                <label for="sucursal_id" class="form-label fw-bold text-secondary text-uppercase small">Filtrar por Sucursal</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-shop text-primary"></i></span>
+                    <select class="form-select border-start-0 ps-0 bg-light" id="sucursal_id" name="sucursal_id" onchange="this.form.submit()">
+                        <option value="" {% if not sucursal_seleccionada %}selected{% endif %} disabled>-- Selecciona Sucursal --</option>
+                        {% for suc in sucursales %}
+                            <option value="{{ suc.id_sucursal }}" {% if sucursal_seleccionada == suc.id_sucursal %}selected{% endif %}>
+                                {{ suc.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+             <!-- Buscador -->
+             <div class="col-md-6">
+                <label for="q" class="form-label fw-bold text-secondary text-uppercase small">Buscar Producto</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-primary"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0 bg-light" id="q" name="q" value="{{ busqueda }}" placeholder="Nombre o código de barras...">
+                    {% if busqueda %}
+                        <a href="{% url 'lista_inventario' %}{% if sucursal_seleccionada %}?sucursal_id={{ sucursal_seleccionada }}{% endif %}" class="btn btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-2 text-end">
+                 <!-- Espacio para futuro -->
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if error %}
+    <div class="alert alert-danger shadow-sm rounded-3 mb-4 border-0 border-start border-4 border-danger">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+            <div>{{ error }}</div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Tabla de Inventario -->
+<div class="card shadow border-0 rounded-4 overflow-hidden">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary text-uppercase small fw-bold">
+                    <tr>
+                        <th class="px-4 py-3">ID Producto</th>
+                        <th class="py-3">Producto</th>
+                        <th class="py-3">Código Barras</th>
+                        <th class="py-3 text-center">Stock Total</th>
+                        <th class="py-3 text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="inventarioBody">
+                    {% for item in inventario %}
+                    <tr>
+                        <td><span class="badge bg-secondary text-light">{{ item.id_producto }}</span></td>
+                        <td class="fw-bold">{{ item.nombre }}</td>
+                        <td>
+                            {% if item.codigo_barras %}
+                                <span class="font-monospace text-muted"><i class="bi bi-upc"></i> {{ item.codigo_barras }}</span>
+                            {% else %}
+                                <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6">{{ item.total_cantidad }}</span>
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'detalle_inventario' item.id_producto %}{% if sucursal_seleccionada %}?sucursal_id={{ sucursal_seleccionada }}{% endif %}" class="btn btn-info btn-sm px-3 text-white fw-bold">
+                                <i class="bi bi-eye-fill me-1"></i> Ver Detalles
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <div class="mb-3">
+                                <i class="bi bi-box-seam fs-1 text-secondary opacity-50"></i>
+                            </div>
+                            <h5 class="fw-normal">No hay stock registrado</h5>
+                            <p class="small mb-0">Prueba ajustando los filtros o asigna stock desde el listado de productos.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputBusqueda = document.getElementById('q');
+        const selectSucursal = document.getElementById('sucursal_id');
+        const tableBody = document.getElementById('inventarioBody');
+        let timeout = null;
+
+        function updateTable() {
+            const url = new URL(window.location);
+            
+            if (inputBusqueda.value) {
+                url.searchParams.set('q', inputBusqueda.value);
+            } else {
+                url.searchParams.delete('q');
+            }
+
+            if (selectSucursal.value) {
+                url.searchParams.set('sucursal_id', selectSucursal.value);
+            } else {
+                url.searchParams.delete('sucursal_id');
+            }
+
+            // Actualizar URL sin recargar
+            window.history.pushState({}, '', url);
+
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newBody = doc.getElementById('inventarioBody');
+                    if (newBody && tableBody) {
+                        tableBody.innerHTML = newBody.innerHTML;
+                    }
+                })
+                .catch(err => console.error('Error actualizando inventario:', err));
+        }
+
+        if (inputBusqueda) {
+            inputBusqueda.addEventListener('input', () => {
+                clearTimeout(timeout);
+                timeout = setTimeout(updateTable, 300);
+            });
+        }
+
+        if (selectSucursal) {
+            selectSucursal.addEventListener('change', updateTable);
+            selectSucursal.removeAttribute('onchange');
+        }
+    });
+</script>
+{% endblock %}

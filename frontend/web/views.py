@@ -461,3 +461,147 @@ def asignar_inventario(request, pk):
         "sucursales": sucursales, 
         "error": error
     })
+
+@token_required
+def lista_inventario(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    sucursales = []
+    inventario = []
+    sucursal_seleccionada = request.GET.get("sucursal_id", "")
+    busqueda = request.GET.get("q", "")
+    error = None
+
+    try:
+        # Cargar sucursales para el filtro
+        resp_sucursales = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
+        if resp_sucursales.status_code == 200:
+            sucursales = resp_sucursales.json()
+        
+        # Cargar inventario AGRUPADO
+        url_inv = f"{BACKEND_URL}/inventarios/agrupado"
+        params = {}
+        if sucursal_seleccionada:
+            params["sucursal_id"] = sucursal_seleccionada
+        if busqueda:
+            params["busqueda"] = busqueda
+            
+        resp_inv = httpx.get(url_inv, params=params, headers=headers)
+        if resp_inv.status_code == 200:
+            inventario = resp_inv.json()
+        elif resp_inv.status_code == 401:
+            request.session.flush()
+            return redirect("login")
+        else:
+             error = "Error al cargar el inventario."
+
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "inventario.html", {
+        "inventario": inventario, 
+        "sucursales": sucursales,
+        "sucursal_seleccionada": int(sucursal_seleccionada) if sucursal_seleccionada else None,
+        "busqueda": busqueda,
+        "error": error
+    })
+
+@token_required
+def detalle_inventario(request, pk):
+    """
+    Vista para ver el desglose de stock de un producto específico (por ID producto).
+    Puede filtrar por sucursal si viene en la query string.
+    """
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    detalles = []
+    producto = {} # Para mostrar info del producto
+    sucursal_seleccionada = request.GET.get("sucursal_id", "")
+    error = None
+
+    try:
+        # 1. Obtener detalles del inventario filtrado por producto y opcionalmente sucursal
+        params = {"producto_id": pk}
+        if sucursal_seleccionada:
+            params["sucursal_id"] = sucursal_seleccionada
+            
+        resp = httpx.get(f"{BACKEND_URL}/inventarios/", params=params, headers=headers)
+        
+        if resp.status_code == 200:
+            detalles = resp.json()
+            # Extraer info básica del producto del primer item (si hay)
+            if detalles:
+                producto = detalles[0].get("producto", {})
+            else:
+                 try:
+                     resp_prod = httpx.get(f"{BACKEND_URL}/productos/{pk}", headers=headers)
+                     if resp_prod.status_code == 200:
+                         producto = resp_prod.json()
+                 except: 
+                     pass
+        
+        elif resp.status_code == 401:
+            request.session.flush()
+            return redirect("login")
+        else:
+            error = "Error al cargar detalles del inventario."
+
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "detalle_inventario.html", {
+        "detalles": detalles,
+        "producto": producto,
+        "error": error
+    })
+
+@token_required
+def editar_inventario(request, pk):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    item = {}
+    error = None
+
+    if request.method == "POST":
+        try:
+            payload = {
+                "cantidad": int(request.POST.get("cantidad")),
+                "ubicacion_especifica": request.POST.get("ubicacion_especifica"),
+                "stock_minimo": int(request.POST.get("stock_minimo")),
+                "stock_maximo": int(request.POST.get("stock_maximo")) if request.POST.get("stock_maximo") else None
+            }
+            # PUT /inventarios/{id}
+            response = httpx.put(f"{BACKEND_URL}/inventarios/{pk}", json=payload, headers=headers)
+            
+            if response.status_code == 200:
+                return redirect("lista_inventario")
+            elif response.status_code == 401:
+                request.session.flush()
+                return redirect("login")
+            else:
+                 try:
+                    error = response.json().get("detail", "Error al actualizar stock")
+                 except:
+                    error = response.text
+        except ValueError:
+             error = "Los valores numéricos no son válidos."
+        except httpx.RequestError as exc:
+            error = f"Error de conexión: {exc}"
+
+    # GET para prellenar
+    try:
+        response = httpx.get(f"{BACKEND_URL}/inventarios/{pk}", headers=headers)
+        if response.status_code == 200:
+            item = response.json()
+        elif response.status_code == 401:
+            request.session.flush()
+            return redirect("login")
+        else:
+            error = "No se encontró el registro de inventario."
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "editar_inventario.html", {"item": item, "error": error})

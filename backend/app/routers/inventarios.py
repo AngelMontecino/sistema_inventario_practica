@@ -25,6 +25,7 @@ def consultar_inventario(
     skip: int = 0, 
     limit: int = 100, 
     sucursal_id: Optional[int] = None,
+    producto_id: Optional[int] = None,
     alerta_stock: Optional[bool] = False,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
@@ -32,9 +33,41 @@ def consultar_inventario(
     """
     Consulta stock disponible.
     sucursal_id: Filtra por sucursal específica.
+    producto_id: Filtra por producto específico.
     alerta_stock: Si es True, muestra solo productos con stock bajo (crítico).
     """
-    return crud.get_inventarios(db, skip=skip, limit=limit, sucursal_id=sucursal_id, alerta_stock=alerta_stock)
+    return crud.get_inventarios(db, skip=skip, limit=limit, sucursal_id=sucursal_id, producto_id=producto_id, alerta_stock=alerta_stock)
+
+@router.get("/agrupado", response_model=List[schemas.InventarioAgrupadoResponse])
+def obtener_inventario_agrupado(
+    sucursal_id: Optional[int] = None,
+    busqueda: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    """
+    Retorna el stock total agrupado por producto para una sucursal.
+    """
+    try:
+        target_sucursal = sucursal_id if sucursal_id else current_user.id_sucursal
+        resultado = crud.get_inventario_agrupado(db, sucursal_id=target_sucursal, busqueda=busqueda)
+        return resultado
+    except Exception as e:
+        print(f"DEBUG ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        raise e
+
+@router.get("/{inventario_id}", response_model=schemas.InventarioResponse)
+def leer_inventario(
+    inventario_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    db_inventario = crud.get_inventario(db, inventario_id=inventario_id)
+    if db_inventario is None:
+        raise HTTPException(status_code=404, detail="Inventario no encontrado")
+    return db_inventario
 
 @router.put("/{inventario_id}", response_model=schemas.InventarioResponse)
 def ajustar_stock(
@@ -69,14 +102,4 @@ def eliminar_inventario(
         raise HTTPException(status_code=400, detail="No se puede eliminar: El inventario tiene stock físico > 0. Ajuste a 0 primero.")
     return None
 
-@router.get("/agrupado", response_model=List[schemas.InventarioAgrupadoResponse])
-def obtener_inventario_agrupado(
-    sucursal_id: Optional[int] = None,
-    db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
-):
-    """
-    Retorna el stock total agrupado por producto para una sucursal.
-    """
-    target_sucursal = sucursal_id if sucursal_id else current_user.id_sucursal
-    return crud.get_inventario_agrupado(db, sucursal_id=target_sucursal)
+

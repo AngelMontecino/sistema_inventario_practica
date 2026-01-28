@@ -31,8 +31,11 @@
                         <a class="nav-link" href="{% url 'lista_productos' %}">Productos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'lista_sucursales' %}">Sucursales</a>
-                    </li>
+                    <a class="nav-link {% if 'sucursales' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'lista_sucursales' %}">Sucursales</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'inventario' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'lista_inventario' %}">Inventario</a>
+                </li>
                 </ul>
                 <div class="d-flex">
                     <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>

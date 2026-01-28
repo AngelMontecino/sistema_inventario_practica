@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Inventario - Sistema Inventario{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        
+        <div class="mb-4">
+            <a href="{% url 'lista_inventario' %}" class="text-decoration-none text-muted mb-2 d-inline-block">
+                <i class="bi bi-arrow-left me-1"></i>Volver al inventario
+            </a>
+            <h2 class="fw-bold">Ajustar Stock</h2>
+        </div>
+
+        <div class="card shadow border-0 rounded-4">
+            <div class="card-header bg-white border-0 pt-4 px-5 pb-0">
+                <h5 class="card-title fw-bold text-primary mb-0">
+                    <i class="bi bi-box-seam me-2"></i>{{ item.producto.nombre }}
+                </h5>
+                <p class="text-muted small mt-1 mb-0">ID Inventario: #{{ item.id_inventario }} | Sucursal ID: {{ item.id_sucursal }}</p>
+            </div>
+            
+            <div class="card-body p-5 pt-4">
+                {% if error %}
+                    <div class="alert alert-danger d-flex align-items-center mb-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <div>{{ error }}</div>
+                    </div>
+                {% endif %}
+
+                {% if item %}
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="cantidad" class="form-label fw-bold">Cantidad Actual <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-lg">
+                            <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('cantidad').stepDown()"><i class="bi bi-dash"></i></button>
+                            <input type="number" class="form-control text-center fw-bold" id="cantidad" name="cantidad" value="{{ item.cantidad }}" required min="0">
+                            <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('cantidad').stepUp()"><i class="bi bi-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="ubicacion_especifica" class="form-label fw-bold">Ubicación Específica</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
+                            <input type="text" class="form-control" id="ubicacion_especifica" name="ubicacion_especifica" value="{{ item.ubicacion_especifica|default_if_none:'' }}" placeholder="Ej. Pasillo A, Estante 3">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="stock_minimo" class="form-label fw-bold text-danger small text-uppercase">Stock Mínimo</label>
+                            <input type="number" class="form-control" id="stock_minimo" name="stock_minimo" value="{{ item.stock_minimo }}" required min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="stock_maximo" class="form-label fw-bold text-success small text-uppercase">Stock Máximo</label>
+                            <input type="number" class="form-control" id="stock_maximo" name="stock_maximo" value="{{ item.stock_maximo|default_if_none:'' }}" min="0">
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                            <i class="bi bi-save me-2"></i>Guardar Ajustes
+                        </button>
+                    </div>
+                </form>
+                {% else %}
+                    <div class="alert alert-warning">No se encontraron datos del inventario.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
