@@ -76,9 +76,21 @@ def listar_productos(
     limit: int = 100, 
     busqueda: Optional[str] = None,
     id_categoria: Optional[int] = None,
+    unidad_medida: Optional[str] = None,
+    precio_min: Optional[float] = None,
+    precio_max: Optional[float] = None,
     db: Session = Depends(get_db)
 ):
-    return crud.get_productos(db, skip=skip, limit=limit, busqueda=busqueda, id_categoria=id_categoria)
+    return crud.get_productos(
+        db, 
+        skip=skip, 
+        limit=limit, 
+        busqueda=busqueda, 
+        id_categoria=id_categoria,
+        unidad_medida=unidad_medida,
+        precio_min=precio_min,
+        precio_max=precio_max
+    )
 
 @router.get("/{producto_id}", response_model=schemas.ProductoResponse)
 def obtener_producto(producto_id: int, db: Session = Depends(get_db)):

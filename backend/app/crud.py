@@ -188,22 +188,39 @@ def get_productos(
     skip: int = 0, 
     limit: int = 100, 
     busqueda: str = None, 
-    id_categoria: int = None
+    id_categoria: int = None,
+    unidad_medida: str = None,
+    precio_min: float = None,
+    precio_max: float = None
 ):
-    query = db.query(models.Producto)
+    query = db.query(models.Producto).options(joinedload(models.Producto.categoria))
+    
     if id_categoria:
         query = query.filter(models.Producto.id_categoria == id_categoria)
+        
+    if unidad_medida:
+        query = query.filter(models.Producto.unidad_medida == unidad_medida)
+        
+    if precio_min is not None:
+        query = query.filter(models.Producto.precio_venta >= precio_min)
+        
+    if precio_max is not None:
+        query = query.filter(models.Producto.precio_venta <= precio_max)
+
     if busqueda:
-        # Búsqueda insensible a mayúsculas por nombre o código de barras
-        query = query.filter(
-            (models.Producto.nombre.ilike(f"%{busqueda}%")) | 
-            (models.Producto.codigo_barras.ilike(f"%{busqueda}%"))
-        )
-    if busqueda:
-        query = query.filter(
-            (models.Producto.nombre.ilike(f"%{busqueda}%")) | 
-            (models.Producto.codigo_barras.ilike(f"%{busqueda}%"))
-        )
+        # Búsqueda insensible a mayúsculas por nombre o código de barras, e ID
+        filtros_busqueda = [
+            models.Producto.nombre.ilike(f"%{busqueda}%"),
+            models.Producto.codigo_barras.ilike(f"%{busqueda}%")
+        ]
+        
+        # Si es numérico, intentar buscar por ID exacto
+        if busqueda.isdigit():
+            filtros_busqueda.append(models.Producto.id_producto == int(busqueda))
+            
+        from sqlalchemy import or_
+        query = query.filter(or_(*filtros_busqueda))
+        
     return query.offset(skip).limit(limit).all()
 
 def get_producto_by_codigo(db: Session, codigo: str):

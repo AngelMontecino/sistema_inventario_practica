@@ -143,6 +143,7 @@ class ActualizacionPrecioProducto(BaseModel):
 
 class ProductoResponse(ProductoBase):
     id_producto: int
+    categoria: Optional[CategoriaBase] = None
     model_config = ConfigDict(from_attributes=True)
 
 

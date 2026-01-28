@@ -11,12 +11,70 @@
     </div>
 </div>
 
+<!-- Barra de Filtros Avanzada -->
+<div class="card shadow-sm mb-4 border-0">
+    <div class="card-body bg-light rounded">
+        <form method="GET" id="filterForm" class="row g-3">
+            <!-- Búsqueda General -->
+            <div class="col-md-4">
+                <label class="form-label small text-muted fw-bold">Buscar</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" id="filterBusqueda" name="q" 
+                           placeholder="Nombre, Código o ID..." value="{{ busqueda|default_if_none:'' }}">
+                </div>
+            </div>
+
+            <!-- Categoría -->
+            <div class="col-md-3">
+                <label class="form-label small text-muted fw-bold">Categoría</label>
+                <select class="form-select" id="filterCategoria" name="id_categoria">
+                    <option value="">Todas</option>
+                    {% for cat in categorias %}
+                        <option value="{{ cat.id_categoria }}" {% if id_categoria == cat.id_categoria %}selected{% endif %}>
+                            {{ cat.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Unidad -->
+            <div class="col-md-2">
+                <label class="form-label small text-muted fw-bold">Unidad</label>
+                <select class="form-select" id="filterUnidad" name="unidad_medida">
+                    <option value="">Todas</option>
+                    <option value="UNID" {% if unidad_medida == 'UNID' %}selected{% endif %}>Unidad</option>
+                    <option value="KG" {% if unidad_medida == 'KG' %}selected{% endif %}>Kilogramo</option>
+                    <option value="LITRO" {% if unidad_medida == 'LITRO' %}selected{% endif %}>Litro</option>
+                </select>
+            </div>
+
+            <!-- Precio Rango -->
+            <div class="col-md-3">
+                <label class="form-label small text-muted fw-bold">Precio Venta</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" id="filterPrecioMin" name="precio_min" placeholder="Min" value="{{ precio_min|default_if_none:'' }}">
+                    <span class="input-group-text">-</span>
+                    <input type="number" class="form-control" id="filterPrecioMax" name="precio_max" placeholder="Max" value="{{ precio_max|default_if_none:'' }}">
+                </div>
+            </div>
+            
+            <!-- Botón Limpiar (Solo visible si hay filtros activos - manejado por JS o lógica simple) -->
+            <div class="col-12 text-end">
+                <a href="{% url 'lista_productos' %}" class="btn btn-link text-decoration-none btn-sm text-secondary">
+                    <i class="bi bi-eraser"></i> Limpiar Filtros
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
 {% if error %}
 <div class="alert alert-danger">{{ error }}</div>
 {% endif %}
 
 <div class="table-responsive">
-    <table class="table table-striped table-hover">
+    <table class="table table-striped table-hover align-middle">
         <thead class="table-dark">
             <tr>
                 <th>ID</th>
@@ -24,19 +82,31 @@
                 <th>Código Barras</th>
                 <th>Precio Venta</th>
                 <th>Unidad</th>
-                <th>Categoría ID</th>
+                <th>Categoría</th>
                 <th class="text-center">Acciones</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="productosBody">
             {% for p in productos %}
             <tr>
-                <td>{{ p.id_producto }}</td>
-                <td>{{ p.nombre }}</td>
-                <td>{{ p.codigo_barras|default:"-" }}</td>
-                <td>${{ p.precio_venta }}</td>
+                <td><span class="badge bg-secondary text-light">{{ p.id_producto }}</span></td>
+                <td class="fw-bold">{{ p.nombre }}</td>
+                <td>
+                    {% if p.codigo_barras %}
+                        <span class="font-monospace text-muted"><i class="bi bi-upc"></i> {{ p.codigo_barras }}</span>
+                    {% else %}
+                        <span class="text-muted small">-</span>
+                    {% endif %}
+                </td>
+                <td class="text-success fw-bold">${{ p.precio_venta }}</td>
                 <td>{{ p.unidad_medida }}</td>
-                <td>{{ p.id_categoria|default:"-" }}</td>
+                <td>
+                    {% if p.categoria %}
+                        <span class="badge bg-info text-dark">{{ p.categoria.nombre }}</span>
+                    {% else %}
+                        <span class="text-muted small">Sin Categoría</span>
+                    {% endif %}
+                </td>
                 <td class="text-center">
                     <a href="{% url 'editar_producto' p.id_producto %}" class="btn btn-primary btn-sm" title="Editar">
                         <i class="bi bi-pencil-square me-1"></i> Editar
@@ -45,10 +115,75 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="text-center">No hay productos registrados.</td>
+                <td colspan="7" class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No se encontraron productos con estos filtros.
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos de filtro
+        const inputs = [
+            'filterBusqueda', 
+            'filterCategoria', 
+            'filterUnidad', 
+            'filterPrecioMin', 
+            'filterPrecioMax'
+        ].map(id => document.getElementById(id));
+
+        let timeout = null;
+        const tableBody = document.getElementById('productosBody');
+
+        function updateTable() {
+            // Construir URL con params
+            const url = new URL(window.location);
+            
+            inputs.forEach(input => {
+                if (input && input.value) {
+                    url.searchParams.set(input.name, input.value);
+                } else if (input) {
+                    url.searchParams.delete(input.name);
+                }
+            });
+
+            // Actualizar historial URL
+            window.history.pushState({}, '', url);
+
+            // Fetch AJAX
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newBody = doc.getElementById('productosBody');
+                    if (newBody && tableBody) {
+                        tableBody.innerHTML = newBody.innerHTML;
+                    }
+                })
+                .catch(err => console.error('Error filtrando:', err));
+        }
+
+        // Event Listeners
+        inputs.forEach(input => {
+            if (!input) return;
+            
+            // Para selects: cambio inmediato
+            if (input.tagName === 'SELECT') {
+                input.addEventListener('change', updateTable);
+            } 
+            // Para texto/numeros: debounce
+            else {
+                input.addEventListener('input', () => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(updateTable, 300);
+                });
+            }
+        });
+    });
+</script>
 {% endblock %}

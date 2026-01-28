@@ -50,16 +50,39 @@ def lista_productos(request):
     token = request.session.get("access_token")
     headers = {"Authorization": f"Bearer {token}"}
     
+    # Capturar Filtros
+    busqueda = request.GET.get("q")
+    unidad_medida = request.GET.get("unidad_medida")
+    id_categoria = request.GET.get("id_categoria")
+    precio_min = request.GET.get("precio_min")
+    precio_max = request.GET.get("precio_max")
+    
     productos = []
+    categorias = [] # Para el filtro
     error = None
 
+    # 1. Obtener Categorías para el filtro
     try:
-        response = httpx.get(f"{BACKEND_URL}/productos/", headers=headers)
+        cat_resp = httpx.get(f"{BACKEND_URL}/productos/categorias/", headers=headers)
+        if cat_resp.status_code == 200:
+            categorias = _aplanar_categorias(cat_resp.json())
+    except httpx.RequestError:
+        pass # Si falla categorias, al menos cargar productos
+
+    # 2. Obtener Productos con filtros
+    try:
+        params = {}
+        if busqueda: params["busqueda"] = busqueda
+        if unidad_medida: params["unidad_medida"] = unidad_medida
+        if id_categoria: params["id_categoria"] = id_categoria
+        if precio_min: params["precio_min"] = precio_min
+        if precio_max: params["precio_max"] = precio_max
+
+        response = httpx.get(f"{BACKEND_URL}/productos/", headers=headers, params=params)
         
         if response.status_code == 200:
             productos = response.json()
         elif response.status_code == 401:
-            # Token expirado o inválido
             request.session.flush()
             return redirect("login")
         else:
@@ -68,7 +91,20 @@ def lista_productos(request):
     except httpx.RequestError as exc:
          error = f"Error de conexión con API: {exc}"
 
-    return render(request, "productos.html", {"productos": productos, "error": error})
+    context = {
+        "productos": productos,
+        "categorias": categorias, # Enviamos categorias para el select
+        "error": error,
+        
+        # Preservar estado de los filtros
+        "busqueda": busqueda,
+        "unidad_medida": unidad_medida,
+        "id_categoria": int(id_categoria) if id_categoria else "",
+        "precio_min": precio_min,
+        "precio_max": precio_max
+    }
+
+    return render(request, "productos.html", context)
 
 @token_required
 def crear_producto(request):
@@ -168,7 +204,6 @@ def crear_categoria(request):
 
     return render(request, "crear_categoria.html", {"categorias": categorias, "error": error})
 
-    return render(request, "crear_categoria.html", {"categorias": categorias, "error": error})
 
 @token_required
 def editar_producto(request, pk):
