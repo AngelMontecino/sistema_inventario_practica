@@ -27,7 +27,12 @@
 
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <!-- Enlaces futuros -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lista_productos' %}">Productos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'lista_sucursales' %}">Sucursales</a>
+                    </li>
                 </ul>
                 <div class="d-flex">
                     <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>

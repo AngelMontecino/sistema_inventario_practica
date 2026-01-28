@@ -271,17 +271,193 @@ def _aplanar_categorias(categorias_raw, nivel=0):
     """Función recursiva para aplanar el árbol de categorías."""
     lista_plana = []
     for cat in categorias_raw:
-        # Crear copia modificada para visualización
         cat_view = {
             "id_categoria": cat["id_categoria"],
             "nombre": ("— " * nivel) + cat["nombre"]
         }
         lista_plana.append(cat_view)
         
-        # Procesar hijas si existen
         if cat.get("hijas"):
             lista_plana.extend(_aplanar_categorias(cat["hijas"], nivel + 1))
             
     return lista_plana 
 
-    return render(request, "crear_producto.html", {"categorias": categorias, "error": error})
+@token_required
+def lista_sucursales(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    sucursales = []
+    error = None
+
+    try:
+        response = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
+        if response.status_code == 200:
+            sucursales = response.json()
+        elif response.status_code == 401:
+            request.session.flush()
+            return redirect("login")
+        else:
+            error = f"Error al cargar sucursales: {response.text}"
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "sucursales.html", {"sucursales": sucursales, "error": error})
+
+@token_required
+def crear_sucursal(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    error = None
+
+    if request.method == "POST":
+        try:
+            payload = {
+                "nombre": request.POST.get("nombre"),
+                "direccion": request.POST.get("direccion") or None,
+                "telefono": request.POST.get("telefono") or None,
+                "es_principal": True if request.POST.get("es_principal") else False
+            }
+            
+            response = httpx.post(f"{BACKEND_URL}/sucursales/", json=payload, headers=headers)
+            
+            if response.status_code == 201:
+                return redirect("lista_sucursales")
+            elif response.status_code == 401:
+                request.session.flush()
+                return redirect("login")
+            else:
+                try:
+                    error = response.json().get("detail", "Error al crear sucursal")
+                except:
+                    error = response.text
+        except httpx.RequestError as exc:
+            error = f"Error de conexión: {exc}"
+
+    return render(request, "crear_sucursal.html", {"error": error})
+
+@token_required
+def editar_sucursal(request, pk):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    sucursal = {}
+    error = None
+
+    # POST: Actualizar
+    if request.method == "POST":
+        try:
+            # 1. Actualizar datos básicos (sin es_principal)
+            payload = {
+                "nombre": request.POST.get("nombre"),
+                "direccion": request.POST.get("direccion") or None,
+                "telefono": request.POST.get("telefono") or None,
+                # "es_principal" se maneja aparte por lógica de negocio del backend
+            }
+            
+            response = httpx.put(f"{BACKEND_URL}/sucursales/{pk}", json=payload, headers=headers)
+            
+            if response.status_code == 200:
+                # 2. Si se marcó como principal, llamar al endpoint específico
+                if request.POST.get("es_principal"):
+                    try:
+                        resp_principal = httpx.put(f"{BACKEND_URL}/sucursales/{pk}/principal", headers=headers)
+                        if resp_principal.status_code != 200:
+                            # Advertencia pero no error fatal
+                            error = "Se actualizaron los datos pero hubo un error al establecer como principal."
+                    except httpx.RequestError:
+                         pass # Fallo silencioso o log
+
+                if not error:
+                    return redirect("lista_sucursales")
+            elif response.status_code == 401:
+                request.session.flush()
+                return redirect("login")
+            else:
+                try:
+                    error = response.json().get("detail", "Error al actualizar sucursal")
+                except:
+                    error = response.text
+        except httpx.RequestError as exc:
+            error = f"Error de conexión: {exc}"
+
+    
+    try:
+        response = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
+        if response.status_code == 200:
+            sucursales = response.json()
+            # Buscar la sucursal especifica
+            sucursal = next((s for s in sucursales if s["id_sucursal"] == pk), None)
+            if not sucursal:
+                 error = "Sucursal no encontrada localmente."
+        elif response.status_code == 401:
+            request.session.flush()
+            return redirect("login")
+        else:
+            error = "Error al cargar datos."
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "editar_sucursal.html", {"sucursal": sucursal, "error": error})
+
+@token_required
+def asignar_inventario(request, pk):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    producto = {}
+    sucursales = []
+    error = None
+
+    # POST: Asignar inventario
+    if request.method == "POST":
+        try:
+            payload = {
+               "id_sucursal": int(request.POST.get("id_sucursal")),
+               "id_producto": pk,
+               "cantidad": int(request.POST.get("cantidad")),
+               "ubicacion_especifica": request.POST.get("ubicacion_especifica"),
+               "stock_minimo": int(request.POST.get("stock_minimo", 5)),
+               "stock_maximo": int(request.POST.get("stock_maximo", 100))
+            }
+            
+            response = httpx.post(f"{BACKEND_URL}/inventarios/", json=payload, headers=headers)
+            
+            if response.status_code == 201:
+                return redirect("lista_productos")
+            elif response.status_code == 401:
+                request.session.flush()
+                return redirect("login")
+            else:
+                try:
+                    error = response.json().get("detail", "Error al asignar inventario")
+                except:
+                    error = response.text
+        except ValueError:
+            error = "Error en los datos numéricos."
+        except httpx.RequestError as exc:
+            error = f"Error de conexión: {exc}"
+
+    # GET: Cargar datos
+    try:
+        # Producto
+        prod_resp = httpx.get(f"{BACKEND_URL}/productos/{pk}", headers=headers)
+        if prod_resp.status_code == 200:
+            producto = prod_resp.json()
+        elif prod_resp.status_code == 401:
+            request.session.flush()
+            return redirect("login")
+            
+        # Sucursales
+        suc_resp = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
+        if suc_resp.status_code == 200:
+            sucursales = suc_resp.json()
+            
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "asignar_inventario.html", {
+        "producto": producto, 
+        "sucursales": sucursales, 
+        "error": error
+    })

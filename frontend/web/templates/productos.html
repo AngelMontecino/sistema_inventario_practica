@@ -108,9 +108,14 @@
                     {% endif %}
                 </td>
                 <td class="text-center">
-                    <a href="{% url 'editar_producto' p.id_producto %}" class="btn btn-primary btn-sm" title="Editar">
-                        <i class="bi bi-pencil-square me-1"></i> Editar
-                    </a>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{% url 'editar_producto' p.id_producto %}" class="btn btn-primary btn-sm px-3 fw-bold" title="Editar">
+                            <i class="bi bi-pencil-square me-1"></i> Editar
+                        </a>
+                        <a href="{% url 'asignar_inventario' p.id_producto %}" class="btn btn-success btn-sm px-3 fw-bold" title="Asignar Stock">
+                            <i class="bi bi-box-seam-fill me-1"></i> Stock
+                        </a>
+                    </div>
                 </td>
             </tr>
             {% empty %}
