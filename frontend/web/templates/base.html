@@ -36,7 +36,15 @@
                 <li class="nav-item">
                     <a class="nav-link {% if 'inventario' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'lista_inventario' %}">Inventario</a>
                 </li>
+                {% if request.session.rol == 'ADMIN' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'usuarios' in request.path %}active fw-bold text-warning{% endif %}" href="{% url 'lista_usuarios' %}">Administración</a>
+                </li>
+                {% endif %}
                 </ul>
+                {% if request.session.nombre %}
+                <span class="navbar-text me-3 text-light">Hola, {{ request.session.nombre }}</span>
+                {% endif %}
                 <div class="d-flex">
                     <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
                 </div>

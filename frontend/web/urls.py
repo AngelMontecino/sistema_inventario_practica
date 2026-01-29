@@ -19,4 +19,9 @@ urlpatterns = [
     path('inventario/', views.lista_inventario, name='lista_inventario'),
     path('inventario/detalle/<int:pk>', views.detalle_inventario, name='detalle_inventario'),
     path('inventario/editar/<int:pk>', views.editar_inventario, name='editar_inventario'),
+    
+    # Administración Usuarios
+    path('usuarios/', views.lista_usuarios, name='lista_usuarios'),
+    path('usuarios/nuevo', views.crear_usuario, name='crear_usuario'),
+    path('usuarios/editar/<int:pk>', views.editar_usuario, name='editar_usuario'),
 ]

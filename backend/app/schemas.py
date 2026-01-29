@@ -79,6 +79,7 @@ class UsuarioUpdate(BaseModel):
 
 class UsuarioResponse(UsuarioBase):
     id_usuario: int
+    sucursal: Optional["SucursalResponse"] = None
     # NO incluimos password en la respuesta
     model_config = ConfigDict(from_attributes=True)
 
@@ -281,6 +282,8 @@ class ReporteCajaItem(CajaResumenResponse):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    rol: str
+    nombre: str
 
 class TokenData(BaseModel):
     email: Optional[str] = None

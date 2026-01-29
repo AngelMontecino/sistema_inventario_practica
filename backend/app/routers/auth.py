@@ -37,7 +37,12 @@ def iniciar_sesion(form_data: OAuth2PasswordRequestForm = Depends(), db: Session
         data={"sub": user.email}, expires_delta=access_token_expires
     )
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "rol": user.rol.value if hasattr(user.rol, 'value') else user.rol,
+        "nombre": user.nombre
+    }
 
 
 

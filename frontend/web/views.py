@@ -26,8 +26,10 @@ def login_view(request):
                 data = response.json()
                 access_token = data.get("access_token")
                 
-                # Guardar token en sesion
+                # Guardar token y datos de usuario en sesion
                 request.session["access_token"] = access_token
+                request.session["rol"] = data.get("rol")
+                request.session["nombre"] = data.get("nombre")
                 
                 # Redirigir al inicio o lista de productos
                 return redirect("lista_productos") 
@@ -605,3 +607,152 @@ def editar_inventario(request, pk):
         error = f"Error de conexión: {exc}"
 
     return render(request, "editar_inventario.html", {"item": item, "error": error})
+
+# --- GESTIÓN DE USUARIOS (ADMIN) ---
+
+from .decorators import admin_required
+
+@admin_required
+def lista_usuarios(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    usuarios = []
+    error = None
+
+    try:
+        response = httpx.get(f"{BACKEND_URL}/usuarios/", headers=headers)
+        if response.status_code == 200:
+            usuarios = response.json()
+        elif response.status_code == 401:
+            request.session.flush()
+            return redirect("login")
+        else:
+            try:
+                error = response.json().get("detail", "Error al cargar usuarios")
+            except:
+                error = response.text
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "usuarios.html", {"usuarios": usuarios, "error": error})
+
+@admin_required
+def crear_usuario(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    sucursales = []
+    error = None
+
+    if request.method == "POST":
+        try:
+            payload = {
+                "nombre": request.POST.get("nombre"),
+                "email": request.POST.get("email"),
+                "password": request.POST.get("password"),
+                "rol": request.POST.get("rol"),
+                "id_sucursal": int(request.POST.get("id_sucursal")),
+                "estado": True # Por defecto activo
+            }
+            
+            response = httpx.post(f"{BACKEND_URL}/usuarios/", json=payload, headers=headers)
+            
+            if response.status_code == 201:
+                return redirect("lista_usuarios")
+            elif response.status_code == 401:
+                request.session.flush()
+                return redirect("login")
+            else:
+                 try:
+                    error = response.json().get("detail", "Error al crear usuario")
+                 except:
+                    error = response.text
+        except ValueError:
+            error = "Error en los datos numéricos (Sucursal)."
+        except httpx.RequestError as exc:
+            error = f"Error de conexión: {exc}"
+
+    # Cargar sucursales para el select
+    try:
+        suc_resp = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
+        if suc_resp.status_code == 200:
+            sucursales = suc_resp.json()
+    except:
+        pass
+
+    return render(request, "crear_usuario.html", {"sucursales": sucursales, "error": error})
+
+@admin_required
+def editar_usuario(request, pk):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    usuario = {}
+    sucursales = []
+    error = None
+
+    # POST: Actualizar
+    if request.method == "POST":
+        try:
+            payload = {
+                "rol": request.POST.get("rol"),
+                "id_sucursal": int(request.POST.get("id_sucursal")),
+                "estado": True if request.POST.get("estado") == "on" else False
+                # No enviamos password ni email/nombre si no se editan.
+                # La vista simplificada asume que nombre/email no se tocan aqui o se mantiene,
+                # pero el requerimiento dice: "Permite cambiar Rol, Sucursal y Estado".
+            }
+            
+            # El schema backend UsuarioUpdate acepta opcionales.
+            
+            response = httpx.put(f"{BACKEND_URL}/usuarios/{pk}", json=payload, headers=headers)
+            
+            if response.status_code == 200:
+                return redirect("lista_usuarios")
+            elif response.status_code == 401:
+                request.session.flush()
+                return redirect("login")
+            else:
+                try:
+                    error = response.json().get("detail", "Error al actualizar usuario")
+                except:
+                    error = response.text
+        except ValueError:
+             error = "Error val datos."
+        except httpx.RequestError as exc:
+            error = f"Error de conexión: {exc}"
+
+    # GET: Cargar datos
+    try:
+        # Sucursales
+        suc_resp = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
+        if suc_resp.status_code == 200:
+            sucursales = suc_resp.json()
+            
+        # Lista usuarios para filtrar localmente (o un endpoint get usuario id si existiera en router)
+        # El router backend NO TIENE get_usuario_by_id especifico expuesto en "/usuarios/{id}"?
+        # Revisemos auth.py:
+        # @router.put("/usuarios/{usuario_id}") existe.
+        # @router.get("/usuarios/") lista todos.
+        # NO HAY GET /usuarios/{id}. Debemos buscar en la lista o agregarlo al backend.
+        # El requerimiento backend solo decia LISTA y CREAR. 
+        # Pero EDITAR requiere cargar datos actuales.
+        # Voy a usar la lista y filtrar en python por simplicidad, dado que no quiero modificar mas backend si no es critico,
+        # aunque lo ideal seria un GET /usuarios/{id}.
+        # Como soy "Antigravity", voy a asumir que puedo filtrar la lista.
+        
+        resp_users = httpx.get(f"{BACKEND_URL}/usuarios/", headers=headers)
+        if resp_users.status_code == 200:
+            users_list = resp_users.json()
+            usuario = next((u for u in users_list if u['id_usuario'] == pk), None)
+            if not usuario:
+                error = "Usuario no encontrado."
+        elif resp_users.status_code == 401:
+             request.session.flush()
+             return redirect("login")
+             
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "editar_usuario.html", {"usuario": usuario, "sucursales": sucursales, "error": error})

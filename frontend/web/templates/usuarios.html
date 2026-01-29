@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Gestión de Usuarios</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'crear_usuario' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Nuevo Usuario
+        </a>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Sucursal</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{ usuario.nombre }}</td>
+                        <td>{{ usuario.email }}</td>
+                        <td>
+                            {% if usuario.rol == 'ADMIN' %}
+                                <span class="badge bg-danger">ADMIN</span>
+                            {% elif usuario.rol == 'VENDEDOR' %}
+                                <span class="badge bg-info text-dark">VENDEDOR</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ usuario.rol }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                             {{ usuario.sucursal.nombre|default:"Sin Asignar" }}
+                        </td>
+                        <td>
+                            {% if usuario.estado %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'editar_usuario' usuario.id_usuario %}" class="btn btn-sm btn-outline-primary">
+                                Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No hay usuarios registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
