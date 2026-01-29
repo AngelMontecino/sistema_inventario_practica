@@ -36,6 +36,9 @@
                 <li class="nav-item">
                     <a class="nav-link {% if 'inventario' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'lista_inventario' %}">Inventario</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'terceros' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'lista_terceros' %}">Terceros</a>
+                </li>
                 {% if request.session.rol == 'ADMIN' %}
                 <li class="nav-item">
                     <a class="nav-link {% if 'usuarios' in request.path %}active fw-bold text-warning{% endif %}" href="{% url 'lista_usuarios' %}">Administración</a>

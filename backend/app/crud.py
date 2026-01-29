@@ -306,8 +306,19 @@ def get_terceros(
             query = query.filter(models.ClienteProveedor.es_proveedor == True)
             
     if busqueda:
-        # Búsqueda por nombre
-        query = query.filter(models.ClienteProveedor.nombre.ilike(f"%{busqueda}%"))
+        # Búsqueda por nombre o RUT
+        from sqlalchemy import or_
+        
+        # Limpiar busqueda de puntos para comparar solo números (y guión/k)
+        busqueda_limpia = busqueda.replace(".", "")
+        
+        query = query.filter(
+            or_(
+                models.ClienteProveedor.nombre.ilike(f"%{busqueda}%"),
+                # Comparamos el RUT de la BD (sin puntos) con la búsqueda (sin puntos)
+                func.replace(models.ClienteProveedor.rut, '.', '').ilike(f"%{busqueda_limpia}%")
+            )
+        )
         
     
     return query.offset(skip).limit(limit).all()

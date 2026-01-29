@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>Clientes y Proveedores</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'crear_tercero' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Nuevo Registro
+        </a>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<!-- Filtros -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-center" id="filterForm">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" id="filterBusqueda" name="q" placeholder="Buscar por Nombre o RUT..." value="{{ busqueda }}">
+                </div>
+            </div>
+            <div class="col-md-7 text-end">
+                <div class="btn-group" role="group" aria-label="Filtro Roles">
+                     <input type="radio" class="btn-check" name="rol" id="rolTodas" value="" autocomplete="off" {% if not filtro_rol %}checked{% endif %}>
+                     <label class="btn btn-outline-secondary" for="rolTodas">Todos</label>
+                   
+                     <input type="radio" class="btn-check" name="rol" id="rolCliente" value="cliente" autocomplete="off" {% if filtro_rol == 'cliente' %}checked{% endif %}>
+                     <label class="btn btn-outline-primary" for="rolCliente">Clientes</label>
+                   
+                     <input type="radio" class="btn-check" name="rol" id="rolProveedor" value="proveedor" autocomplete="off" {% if filtro_rol == 'proveedor' %}checked{% endif %}>
+                     <label class="btn btn-outline-success" for="rolProveedor">Proveedores</label>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>RUT/ID</th>
+                        <th>Nombre</th>
+                        <th>Contacto</th>
+                        <th>Roles</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tercerosBody">
+                    {% for tercero in terceros %}
+                    <tr>
+                        <td>{{ tercero.rut }}</td>
+                        <td>{{ tercero.nombre }}</td>
+                        <td>
+                            {% if tercero.email %}
+                            <div><small><i class="bi bi-envelope"></i> {{ tercero.email }}</small></div>
+                            {% endif %}
+                            {% if tercero.telefono %}
+                            <div><small><i class="bi bi-telephone"></i> {{ tercero.telefono }}</small></div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if tercero.es_cliente %}
+                                <span class="badge bg-primary">Cliente</span>
+                            {% endif %}
+                            {% if tercero.es_proveedor %}
+                                <span class="badge bg-success">Proveedor</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'editar_tercero' tercero.id_tercero %}" class="btn btn-sm btn-outline-primary">
+                                Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted p-4">
+                            No se encontraron registros.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputBusqueda = document.getElementById("filterBusqueda");
+        const radiosRol = document.querySelectorAll('input[name="rol"]');
+        const tableBody = document.getElementById("tercerosBody");
+        let timeout = null;
+
+        function updateTable() {
+            const url = new URL(window.location);
+            
+            // Parametro Busqueda
+            if (inputBusqueda.value) {
+                url.searchParams.set("q", inputBusqueda.value);
+            } else {
+                url.searchParams.delete("q");
+            }
+
+            // Parametro Rol 
+            let rolValue = "";
+            radiosRol.forEach(r => {
+                if (r.checked) rolValue = r.value;
+            });
+            if (rolValue) {
+                url.searchParams.set("rol", rolValue);
+            } else {
+                url.searchParams.delete("rol");
+            }
+
+        
+            window.history.pushState({}, "", url);
+
+        
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, "text/html");
+                    const newBody = doc.getElementById("tercerosBody");
+                    if (newBody && tableBody) {
+                        tableBody.innerHTML = newBody.innerHTML;
+                    }
+                })
+                .catch(err => console.error("Error filtrando terceros:", err));
+        }
+
+      
+        if (inputBusqueda) {
+            inputBusqueda.addEventListener("input", function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(updateTable, 300);
+            });
+        }
+
+        radiosRol.forEach(radio => {
+            radio.addEventListener("change", updateTable);
+        });
+    });
+</script>
+{% endblock %}
