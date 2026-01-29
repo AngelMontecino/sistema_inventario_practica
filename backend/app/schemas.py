@@ -256,6 +256,7 @@ class CajaResumenResponse(BaseModel):
     ingresos_extra: Decimal
     egresos_extra: Decimal
     saldo_teorico: Decimal
+    estado: str = "CERRADA"
 
 class CierreCajaRequest(BaseModel):
     monto_real: Decimal = Field(decimal_places=2)
@@ -272,7 +273,6 @@ class ReporteCajaItem(CajaResumenResponse):
     usuario_apertura: str
     usuario_cierre: Optional[str] = None
     sucursal: str
-    estado: str # "ABIERTA" o "CERRADA"
     monto_real: Optional[Decimal] = None
     diferencia: Optional[Decimal] = None
 
@@ -284,6 +284,7 @@ class Token(BaseModel):
     token_type: str
     rol: str
     nombre: str
+    id_sucursal: int
 
 class TokenData(BaseModel):
     email: Optional[str] = None

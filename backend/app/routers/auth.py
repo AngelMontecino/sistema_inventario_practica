@@ -41,7 +41,8 @@ def iniciar_sesion(form_data: OAuth2PasswordRequestForm = Depends(), db: Session
         "access_token": access_token, 
         "token_type": "bearer",
         "rol": user.rol.value if hasattr(user.rol, 'value') else user.rol,
-        "nombre": user.nombre
+        "nombre": user.nombre,
+        "id_sucursal": user.id_sucursal
     }
 
 

@@ -39,6 +39,12 @@
                 <li class="nav-item">
                     <a class="nav-link {% if 'terceros' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'lista_terceros' %}">Terceros</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'documentos' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'crear_documento' %}">Punto Venta</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'caja' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'gestion_caja' %}">Caja</a>
+                </li>
                 {% if request.session.rol == 'ADMIN' %}
                 <li class="nav-item">
                     <a class="nav-link {% if 'usuarios' in request.path %}active fw-bold text-warning{% endif %}" href="{% url 'lista_usuarios' %}">Administración</a>

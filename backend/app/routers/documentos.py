@@ -18,10 +18,18 @@ def crear_documento(
     - **Venta**: Valida stock y descuenta inventario.
     - **Compra**: Aumenta stock en inventario.
     """
-    resultado = crud.create_documento(db=db, documento=documento)
-    if isinstance(resultado, dict) and "error" in resultado:
-        raise HTTPException(status_code=400, detail=resultado["error"])
-    return resultado
+    # Asignar usuario autenticado
+    try:
+        documento.id_usuario = current_user.id_usuario
+        print(f"DEBUG: Intentando crear doc con usuario {documento.id_usuario} sucursal {documento.id_sucursal}")
+        resultado = crud.create_documento(db=db, documento=documento)
+        if isinstance(resultado, dict) and "error" in resultado:
+            raise HTTPException(status_code=400, detail=resultado["error"])
+        return resultado
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error Interno: {str(e)}")
 
 @router.get("/{documento_id}", response_model=schemas.DocumentoResponse)
 def obtener_documento(

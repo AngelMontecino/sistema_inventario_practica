@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Caja{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Gestión de Caja</h1>
+</div>
+
+{% if error %}
+<div class="alert alert-danger" role="alert">
+    {{ error }}
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Panel de Estado -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="my-0 fw-normal">Estado de Caja</h5>
+            </div>
+            <div class="card-body">
+                {% if resumen and resumen.estado == 'ABIERTA' %}
+                    <h2 class="card-title pricing-card-title text-success">ABIERTA</h2>
+                    <ul class="list-unstyled mt-3 mb-4">
+                        <li><strong>Saldo Inicial:</strong> ${{ resumen.saldo_inicial }}</li>
+                        <li><strong>Ventas (Ingresos):</strong> ${{ resumen.ingresos_ventas }}</li>
+                        <li><strong>Compras (Egresos):</strong> ${{ resumen.egresos_compras }}</li>
+                        <li><strong>Otros Ingresos:</strong> ${{ resumen.ingresos_extra }}</li>
+                        <li><strong>Otros Egresos:</strong> ${{ resumen.egresos_extra }}</li>
+                        <li class="border-top pt-2 mt-2"><strong>Saldo Teórico Actual:</strong> ${{ resumen.saldo_teorico }}</li>
+                    </ul>
+                    <a href="{% url 'cerrar_caja' %}" class="w-100 btn btn-lg btn-danger">Cerrar Caja</a>
+                {% else %}
+                    <h2 class="card-title pricing-card-title text-secondary">CERRADA / SIN MOVIMIENTOS</h2>
+                    <p class="text-muted">Debe abrir la caja para realizar ventas.</p>
+                    <a href="{% url 'abrir_caja' %}" class="w-100 btn btn-lg btn-success">Abrir Caja</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Accesos Rápidos -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="my-0 fw-normal">Acciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'crear_documento' %}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-cart-plus"></i> Nueva Venta (POS)
+                    </a>
+                    <button class="btn btn-outline-secondary" disabled>Registrar Movimiento Extra (Pronto)</button>
+                    <button class="btn btn-outline-info" disabled>Ver Reportes Históricos (Pronto)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

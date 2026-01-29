@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Cierre de Caja Exitoso{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow border-success">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-check-circle"></i> Caja Cerrada Exitosamente</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    El turno se ha cerrado correctamente.
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                         <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <strong>Saldo Inicial:</strong>
+                                <span>${{ resultado.saldo_inicial }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <strong>Ventas:</strong>
+                                <span class="text-success">+ ${{ resultado.ingresos_ventas }}</span>
+                            </li>
+                             <li class="list-group-item d-flex justify-content-between">
+                                <strong>Compras/Gastos:</strong>
+                                <span class="text-danger">- ${{ resultado.egresos_compras }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-group list-group-flush">
+                             <li class="list-group-item d-flex justify-content-between bg-light">
+                                <strong>Saldo Teórico:</strong>
+                                <span>${{ resultado.saldo_teorico }}</span>
+                            </li>
+                             <li class="list-group-item d-flex justify-content-between">
+                                <strong>Dinero Contado:</strong>
+                                <span class="fw-bold">${{ resultado.monto_real }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <strong>Diferencia:</strong>
+                                <span class="{% if resultado.diferencia < 0 %}text-danger{% elif resultado.diferencia > 0 %}text-success{% else %}text-muted{% endif %} fw-bold">
+                                    ${{ resultado.diferencia }}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{% url 'gestion_caja' %}" class="btn btn-primary btn-lg">Volver al Panel de Caja</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

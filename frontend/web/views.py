@@ -30,6 +30,7 @@ def login_view(request):
                 request.session["access_token"] = access_token
                 request.session["rol"] = data.get("rol")
                 request.session["nombre"] = data.get("nombre")
+                request.session["id_sucursal"] = data.get("id_sucursal")
                 
                 # Redirigir al inicio o lista de productos
                 return redirect("lista_productos") 
@@ -904,3 +905,112 @@ def editar_tercero(request, pk):
         "tercero": tercero, 
         "error": error
     })
+
+# --- DOCUMENTOS (POS) ---
+
+from django.http import JsonResponse
+import json
+
+@token_required
+def crear_documento(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # Manejo de API SUBMIT (POST JSON)
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            # Inyectar datos de sesión si faltan
+            if not data.get("id_sucursal"):
+                data["id_sucursal"] = request.session.get("id_sucursal")
+            # id_usuario lo maneja el backend via token, pero el schema lo pide. 
+            # Como no tenemos el ID en sesion (solo nombre), lo ideal es que el backend lo obtuviera del token.
+            # Sin embargo, el esquema DocumentoCreate tiene id_usuario: int.
+            # En la implementacion de create_documento en crud.py, se usa documento.id_usuario asignado aqui.
+            # OJO: Necesitamos el ID del usuario.
+            # Solución rápida: En Auth, getUser devuelve ID? 
+            # El token tiene 'sub' con el username, pero no el ID directo estandar.
+            # Asumiremos que el backend es capaz de asignar el current_user si viene en 0 o similar, 
+            # O tendremos que hacer un fetch 'users/me' previo.
+            # REVISANDO LOGIN: auth.py devuelve usuario completo en create_access_token? No.
+            # Vamos a enviar 0 y ver si el backend lo toma del dependency, o fallará.
+            # REVISANDO BACKEND TERCEROS: crud.create_tercero NO usa tercero.id_usuario, pero Documentos SI.
+            # El endpoint de documentos NO inyecta `current_user` al esquema antes de llamar al crud??
+            # VALIDAR ENDPOINT BACKEND /documentos/
+            
+            # (Asumimos temporalmente envio 0 y luego corregimos si falla, o fetch me)
+            # data["id_usuario"] = ...
+            
+            response = httpx.post(f"{BACKEND_URL}/documentos/", json=data, headers=headers)
+            
+            if response.status_code == 200 or response.status_code == 201:
+                return JsonResponse({"status": "success", "redirect_url": "/inventario/"}) # O detalle confirmacion
+            else:
+                try:
+                    detail = response.json().get("detail", "Error desconocido")
+                except:
+                    detail = response.text
+                return JsonResponse({"status": "error", "message": detail}, status=400)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({"status": "error", "message": "JSON Inválido"}, status=400)
+        except httpx.RequestError as exc:
+             return JsonResponse({"status": "error", "message": f"Conexión: {exc}"}, status=500)
+
+    # GET: Cargar Interfaz
+    terceros = []
+    try:
+        # Cargar todos los terceros para el select
+        resp = httpx.get(f"{BACKEND_URL}/terceros/", headers=headers)
+        if resp.status_code == 200:
+            terceros = resp.json()
+    except:
+        pass
+
+    return render(request, "documentos/crear.html", {
+        "terceros": terceros,
+        "usuario_nombre": request.session.get("nombre"),
+        "sucursal_id": request.session.get("id_sucursal")
+    })
+
+@token_required
+def api_buscar_productos(request):
+    """Proxy para buscar productos via AJAX"""
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    q = request.GET.get("q", "")
+    
+    try:
+        response = httpx.get(f"{BACKEND_URL}/productos/", params={"busqueda": q}, headers=headers)
+        return JsonResponse(response.json(), safe=False)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+@token_required
+def api_ver_stock(request):
+    """Proxy para ver stock específico"""
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    p_id = request.GET.get("id_producto")
+    s_id = request.GET.get("id_sucursal")
+    
+    try:
+        # Usamos endpoint inventarios con filtros
+        params = {"sucursal_id": s_id, "producto_id": p_id}
+        response = httpx.get(f"{BACKEND_URL}/inventarios/", params=params, headers=headers)
+        data = response.json()
+        cantidad = 0
+        if data:
+            # Sumar si hubiera mltiples ubicaciones
+            for item in data:
+                cantidad += item.get("total_cantidad", 0) # El endpoint inventarios/ puede devolver lista
+                # Ojo: endpoint inventarios devuelve lista de objetos InventarioResponse.
+                # InventarioResponse tiene 'cantidad'.
+                # get_inventarios returns List[Inventario].
+        
+        # Correccion: endpoint devuelve lista de inventario objects
+        # Sumamos 'cantidad'
+        inv_total = sum(i['cantidad'] for i in data)
+        return JsonResponse({"stock": inv_total})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
