@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Detalle de Sesión de Caja{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Detalle de Caja #{{ detalle.id_apertura }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'ver_reportes_caja' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a Reportes
+        </a>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger" role="alert">
+    {{ error }}
+</div>
+{% endif %}
+
+{% if detalle %}
+<!-- Resumen Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">Saldo Inicial</div>
+            <div class="card-body">
+                <h4 class="card-title">${{ detalle.saldo_inicial|intcomma }}</h4>
+                <p class="card-text small">{{ detalle.fecha_apertura|date:"d/m/Y H:i" }} por {{ detalle.usuario_apertura }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-dark bg-light mb-3 border-secondary">
+            <div class="card-header">Ventas (Ingresos)</div>
+            <div class="card-body">
+                <h4 class="card-title text-success">+ ${{ detalle.ingresos_ventas|intcomma }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-dark bg-light mb-3 border-secondary">
+            <div class="card-header">Compras/Gastos (Egresos)</div>
+            <div class="card-body">
+                <h4 class="card-title text-danger">- ${{ detalle.egresos_compras|add:detalle.egresos_extra|intcomma }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card {% if detalle.estado == 'ABIERTA' %}bg-success{% else %}bg-secondary{% endif %} text-white mb-3">
+            <div class="card-header">Saldo Final {% if detalle.estado == 'ABIERTA' %}(Actual){% endif %}</div>
+            <div class="card-body">
+                <h4 class="card-title">${{ detalle.saldo_teorico|intcomma }}</h4>
+                {% if detalle.estado == 'CERRADA' %}
+                    <p class="card-text small">Cierre: {{ detalle.fecha_cierre|date:"d/m/Y H:i" }} (Dif: ${{ detalle.diferencia|intcomma }})</p>
+                {% else %}
+                    <p class="card-text small">EN CURSO</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="movimientos-tab" data-bs-toggle="tab" data-bs-target="#movimientos" type="button" role="tab">Todos los Movimientos</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="documentos-tab" data-bs-toggle="tab" data-bs-target="#documentos" type="button" role="tab">Documentos (Ventas/Compras)</button>
+    </li>
+</ul>
+
+<div class="tab-content pt-3" id="myTabContent">
+    
+    <!-- Tab Movimientos Caja -->
+    <div class="tab-pane fade show active" id="movimientos" role="tabpanel">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Descripción</th>
+                        <th>Usuario</th>
+                        <th class="text-end">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in detalle.movimientos %}
+                    <tr>
+                        <td>{{ mov.id_movimiento }}</td>
+                        <td>{{ mov.fecha|date:"d/m/Y H:i:s" }}</td>
+                        <td>
+                            {% if mov.tipo == "INGRESO" %}<span class="badge bg-success">INGRESO</span>
+                            {% elif mov.tipo == "EGRESO" %}<span class="badge bg-danger">EGRESO</span>
+                            {% elif mov.tipo == "APERTURA" %}<span class="badge bg-primary">APERTURA</span>
+                            {% elif mov.tipo == "CIERRE" %}<span class="badge bg-secondary">CIERRE</span>
+                            {% else %}{{ mov.tipo }}{% endif %}
+                        </td>
+                        <td>{{ mov.descripcion }}</td>
+                        <td>{{ mov.id_usuario }}</td> 
+                        <td class="text-end fw-bold">
+                            ${{ mov.monto|intcomma }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6">Sin movimientos.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab Documentos -->
+    <div class="tab-pane fade" id="documentos" role="tabpanel">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Operación</th>
+                        <th>Fecha</th>
+                        <th>Tercero</th>
+                        <th>Estado</th>
+                        <th class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in detalle.documentos_summary %}
+                    <tr>
+                        <td>{{ doc.folio }}</td>
+                        <td>
+                            {% if doc.tipo_operacion == "VENTA" %}<span class="badge bg-info text-dark">VENTA</span>
+                            {% else %}<span class="badge bg-warning text-dark">COMPRA</span>{% endif %}
+                        </td>
+                        <td>{{ doc.fecha_emision|date:"d/m/Y H:i" }}</td>
+                        <td>{{ doc.id_tercero|default:"-" }}</td>
+                        <td>{{ doc.estado_pago }}</td>
+                        <td class="text-end">${{ doc.total|default:"0"|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6">No hay documentos registrados en esta sesión.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+
+{% else %}
+    <div class="alert alert-info">No se encontraron detalles para esta sesión o hubo un error al cargarlos.</div>
+{% endif %}
+
+{% endblock %}

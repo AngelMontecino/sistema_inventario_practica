@@ -827,6 +827,66 @@ def get_reporte_caja_historico(db, fecha_inicio: datetime, fecha_fin: datetime, 
         
     return reporte
 
-
 def get_movimiento(db: Session, movimiento_id: int):
     return db.query(models.MovimientosCaja).filter(models.MovimientosCaja.id_movimiento == movimiento_id).first()
+
+def get_detalle_sesion_caja(db: Session, id_apertura: int):
+    # 1 Obtener Apertura
+    apertura = get_movimiento(db, id_apertura)
+    if not apertura or apertura.tipo != models.TipoMovimientoCaja.APERTURA:
+        return None
+    
+    # 2 Buscar Cierre
+    cierre = db.query(models.MovimientosCaja).filter(
+        models.MovimientosCaja.id_sucursal == apertura.id_sucursal,
+        models.MovimientosCaja.tipo == models.TipoMovimientoCaja.CIERRE,
+        models.MovimientosCaja.fecha > apertura.fecha
+    ).order_by(models.MovimientosCaja.fecha.asc()).first()
+    
+    fecha_fin = cierre.fecha if cierre else datetime.now()
+    
+    # 3 Calcular Resumen Base 
+    resumen = calcular_resumen_periodo(db, apertura.id_sucursal, apertura.fecha, fecha_fin, apertura.monto)
+    
+    # 4 Obtener Movimientos de Caja (Ingresos/Egresos/Apertura/Cierre)
+    movs = db.query(models.MovimientosCaja).filter(
+        models.MovimientosCaja.id_sucursal == apertura.id_sucursal,
+        models.MovimientosCaja.fecha >= apertura.fecha,
+        models.MovimientosCaja.fecha <= fecha_fin
+    ).order_by(models.MovimientosCaja.fecha.asc()).all()
+    
+    # 5 Obtener Documentos (Ventas/Compras) del periodo
+
+    docs = db.query(models.Documento).filter(
+        models.Documento.id_sucursal == apertura.id_sucursal,
+        models.Documento.fecha_emision >= apertura.fecha,
+        models.Documento.fecha_emision <= fecha_fin,
+        models.Documento.estado_pago == models.EstadoPago.PAGADO 
+    ).order_by(models.Documento.fecha_emision.asc()).all()
+    
+    # 6 Construir Respuesta
+    diff = None
+    monto_real = None
+    if cierre:
+         desc_parts = cierre.descripcion.split("Diferencia: ")
+         if len(desc_parts) > 1:
+             try:
+                 diff = float(desc_parts[1])
+             except:
+                 pass
+         monto_real = cierre.monto
+
+    return {
+        **resumen,
+        "id_apertura": apertura.id_movimiento,
+        "fecha_apertura": apertura.fecha,
+        "fecha_cierre": cierre.fecha if cierre else None,
+        "usuario_apertura": apertura.usuario.nombre,
+        "usuario_cierre": cierre.usuario.nombre if cierre else None,
+        "sucursal": apertura.sucursal.nombre,
+        "estado": "CERRADA" if cierre else "ABIERTA",
+        "monto_real": monto_real,
+        "diferencia": diff,
+        "movimientos": movs,
+        "documentos_summary": docs
+    }

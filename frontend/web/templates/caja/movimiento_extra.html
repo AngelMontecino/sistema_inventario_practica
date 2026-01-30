@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Movimiento Extra{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h4 class="mb-0">Registrar Movimiento Extra</h4>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="tipo" class="form-label">Tipo de Movimiento</label>
+                        <select class="form-select" id="tipo" name="tipo" required>
+                            <option value="INGRESO">Ingreso (Dinero entra a caja)</option>
+                            <option value="EGRESO">Egreso (Dinero sale de caja)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="monto" class="form-label">Monto</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="monto" name="monto" min="1" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción / Motivo</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required placeholder="Ej: Pago de flete, Aporte de capital..."></textarea>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Registrar Movimiento</button>
+                        <a href="{% url 'gestion_caja' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

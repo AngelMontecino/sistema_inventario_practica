@@ -276,6 +276,11 @@ class ReporteCajaItem(CajaResumenResponse):
     monto_real: Optional[Decimal] = None
     diferencia: Optional[Decimal] = None
 
+class CajaSesionDetalleResponse(ReporteCajaItem):
+    movimientos: List[MovimientoCajaResponse] = []
+   
+    documentos_summary: List[DocumentoResponse] = [] 
+
 
 # AUTH / TOKEN SCHEMAS
 

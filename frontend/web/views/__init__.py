@@ -9,4 +9,4 @@ from .config import (
 )
 from .terceros import lista_terceros, crear_tercero, editar_tercero
 from .documentos import crear_documento, api_buscar_productos, api_ver_stock
-from .caja import gestion_caja, abrir_caja, cerrar_caja
+from .caja import gestion_caja, abrir_caja, cerrar_caja, registrar_movimiento, ver_reportes, detalle_sesion

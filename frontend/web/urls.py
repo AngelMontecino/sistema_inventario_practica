@@ -40,10 +40,13 @@ urlpatterns = [
     # Documentos
     path('documentos/nuevo', views.crear_documento, name='crear_documento'),
     
-    # Caja (NUEVO)
+    # Caja 
     path('caja/', views.gestion_caja, name='gestion_caja'),
     path('caja/apertura', views.abrir_caja, name='abrir_caja'),
     path('caja/cierre', views.cerrar_caja, name='cerrar_caja'),
+    path('caja/movimiento', views.registrar_movimiento, name='registrar_movimiento_caja'), 
+    path('caja/reportes', views.ver_reportes, name='ver_reportes_caja'),
+    path('caja/reportes/<int:id_apertura>', views.detalle_sesion, name='detalle_sesion_caja'),
 
     # API Proxies
     path('api/productos/buscar', views.api_buscar_productos, name='api_buscar_productos'),

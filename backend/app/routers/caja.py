@@ -83,6 +83,12 @@ def registrar_movimiento(
     # Por ahora forzamos sucursal del usuario logueado si no coincide 
     if movimiento.id_sucursal != current_user.id_sucursal and current_user.rol != models.TipoRol.ADMIN:
         raise HTTPException(status_code=403, detail="No puede registrar movimientos en otra sucursal")
+    
+    # Force user ID from token
+    movimiento.id_usuario = current_user.id_usuario
+    # Force sucursal if not admin (optional but good practice)
+    if current_user.rol != models.TipoRol.ADMIN:
+        movimiento.id_sucursal = current_user.id_sucursal
         
     resultado = crud.registrar_movimiento_caja(db=db, movimiento=movimiento)
     if isinstance(resultado, dict) and "error" in resultado:
@@ -109,3 +115,25 @@ def obtener_reportes(
         sucursal_id=sucursal_id, 
         usuario_id=usuario_id
     )
+
+@router.get("/sesion/{id_apertura}", response_model=schemas.CajaSesionDetalleResponse)
+def obtener_detalle_sesion(
+    id_apertura: int,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    """
+    Obtiene el detalle completo de una sesión de caja (Apertura -> Cierre).
+    """
+    detalle = crud.get_detalle_sesion_caja(db, id_apertura)
+    if not detalle:
+         raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
+    
+    if current_user.rol != models.TipoRol.ADMIN:
+        # Recuperar objeto apertura para chequear sucursal
+        # (El crud ya filtra, pero el detalle checa permissions extra)
+        apertura = crud.get_movimiento(db, id_apertura)
+        if apertura and apertura.id_sucursal != current_user.id_sucursal:
+             raise HTTPException(status_code=403, detail="No tiene permiso para ver esta caja")
+             
+    return detalle

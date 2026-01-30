@@ -98,3 +98,139 @@ def cerrar_caja(request):
             error = f"Error de conexión: {exc}"
 
     return render(request, "caja/cierre.html", {"resumen": resumen, "error": error})
+
+@token_required
+def registrar_movimiento(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    error = None
+
+    if request.method == "POST":
+        try:
+            tipo = request.POST.get("tipo")
+            monto = float(request.POST.get("monto", 0))
+            descripcion = request.POST.get("descripcion", "")
+
+            
+            id_sucursal = request.session.get("id_sucursal") 
+            
+           
+            if not id_sucursal:
+                 
+                 id_sucursal = 0
+
+            payload = {
+                "tipo": tipo,
+                "monto": monto,
+                "descripcion": descripcion,
+                "id_sucursal": id_sucursal, 
+                "id_usuario": 0, # Backend lo toma del token
+                "id_documento_asociado": None
+            }
+            
+            
+            resp = httpx.post(f"{BACKEND_URL}/caja/movimientos", json=payload, headers=headers)
+            
+            if resp.status_code == 201:
+                return redirect("gestion_caja")
+            else:
+                 try:
+                    error = resp.json().get("detail", "Error al registrar movimiento")
+                 except:
+                    error = resp.text
+
+        except ValueError:
+            error = "Datos inválidos"
+        except httpx.RequestError as exc:
+            error = f"Error de conexión: {exc}"
+
+    return render(request, "caja/movimiento_extra.html", {"error": error})
+
+@token_required
+def ver_reportes(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # Filtros por defecto: Hoy
+    from datetime import date, timedelta
+    today = date.today().isoformat()
+    fecha_inicio = request.GET.get("fecha_inicio", today)
+    fecha_fin = request.GET.get("fecha_fin", today)
+    sucursal_id = request.GET.get("sucursal_id", "")
+    
+    reportes = []
+    sucursales = []
+    error = None
+    
+    # Cargar sucursales para el filtro (solo si admin o para que el usario vea su propia sucursal)
+    try:
+        resp_suc = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
+        if resp_suc.status_code == 200:
+            sucursales = resp_suc.json()
+    except:
+        pass
+
+    try:
+        # Endpoints: fecha_inicio, fecha_fin (datetime)
+        params = {
+            "fecha_inicio": f"{fecha_inicio}T00:00:00",
+            "fecha_fin": f"{fecha_fin}T23:59:59"
+        }
+        if sucursal_id:
+            params["sucursal_id"] = sucursal_id
+
+        resp = httpx.get(f"{BACKEND_URL}/caja/reportes", params=params, headers=headers)
+        if resp.status_code == 200:
+            reportes = resp.json()
+            
+            from datetime import datetime
+            for r in reportes:
+                if r.get("fecha_apertura"):
+                    r["fecha_apertura"] = datetime.fromisoformat(r["fecha_apertura"])
+                if r.get("fecha_cierre"):
+                    r["fecha_cierre"] = datetime.fromisoformat(r["fecha_cierre"])
+        else:
+            error = "No se pudieron cargar los reportes."
+    except httpx.RequestError:
+        error = "Error de conexión con el servidor."
+        
+    return render(request, "caja/reportes.html", {
+        "reportes": reportes,
+        "sucursales": sucursales,
+        "sucursal_activa": sucursal_id,
+        "fecha_inicio": fecha_inicio, 
+        "fecha_fin": fecha_fin,
+        "error": error
+    })
+
+@token_required
+def detalle_sesion(request, id_apertura):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    error = None
+    detalle = None
+
+    try:
+        resp = httpx.get(f"{BACKEND_URL}/caja/sesion/{id_apertura}", headers=headers)
+        if resp.status_code == 200:
+            detalle = resp.json()
+       
+            from datetime import datetime
+            if detalle.get("fecha_apertura"): detalle["fecha_apertura"] = datetime.fromisoformat(detalle["fecha_apertura"])
+            if detalle.get("fecha_cierre"): detalle["fecha_cierre"] = datetime.fromisoformat(detalle["fecha_cierre"])
+            
+            for mov in detalle.get("movimientos", []):
+                if mov.get("fecha"): mov["fecha"] = datetime.fromisoformat(mov["fecha"])
+            
+            for doc in detalle.get("documentos_summary", []):
+                if doc.get("fecha_emision"): doc["fecha_emision"] = datetime.fromisoformat(doc["fecha_emision"])
+
+        else:
+            error = f"Error al obtener detalle: {resp.status_code}"
+    except httpx.RequestError as exc:
+        error = f"Error de conexión: {exc}"
+
+    return render(request, "caja/detalle_sesion.html", {
+        "detalle": detalle, 
+        "error": error
+    })
