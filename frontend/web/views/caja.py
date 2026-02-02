@@ -224,6 +224,11 @@ def detalle_sesion(request, id_apertura):
             
             for doc in detalle.get("documentos_summary", []):
                 if doc.get("fecha_emision"): doc["fecha_emision"] = datetime.fromisoformat(doc["fecha_emision"])
+            
+            # Calcular Totales 
+            egresos_compras = float(detalle.get("egresos_compras", 0))
+            egresos_extra = float(detalle.get("egresos_extra", 0))
+            detalle["total_egresos"] = egresos_compras + egresos_extra
 
         else:
             error = f"Error al obtener detalle: {resp.status_code}"

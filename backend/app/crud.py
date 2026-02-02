@@ -731,7 +731,7 @@ def cerrar_caja(db: Session, sucursal_id: int, usuario_id: int, monto_real: floa
 
 def calcular_resumen_periodo(db: Session, sucursal_id: int, fecha_inicio: datetime, fecha_fin: datetime, saldo_inicial: float):
     #  Sumar Ventas (Ingresos)
-    ventas = db.query(func.sum(models.DetalleDocumento.cantidad * models.DetalleDocumento.precio_unitario - models.DetalleDocumento.descuento))\
+    ventas = db.query(func.sum(models.DetalleDocumento.cantidad * models.DetalleDocumento.precio_unitario * (1 - models.DetalleDocumento.descuento / 100)))\
         .join(models.Documento)\
         .filter(
             models.Documento.id_sucursal == sucursal_id,
@@ -742,7 +742,7 @@ def calcular_resumen_periodo(db: Session, sucursal_id: int, fecha_inicio: dateti
         ).scalar() or 0
         
     # Sumar Compras (Egresos)
-    compras = db.query(func.sum(models.DetalleDocumento.cantidad * models.DetalleDocumento.precio_unitario - models.DetalleDocumento.descuento))\
+    compras = db.query(func.sum(models.DetalleDocumento.cantidad * models.DetalleDocumento.precio_unitario * (1 - models.DetalleDocumento.descuento / 100)))\
         .join(models.Documento)\
         .filter(
             models.Documento.id_sucursal == sucursal_id,
@@ -752,13 +752,14 @@ def calcular_resumen_periodo(db: Session, sucursal_id: int, fecha_inicio: dateti
             models.Documento.estado_pago == models.EstadoPago.PAGADO
         ).scalar() or 0
         
-    # Sumar Movimientos Extra
+    # Sumar Movimientos Extra (EXCLUYENDO los asociados a documentos para no duplicar con Ventas/Compras)
     ingresos_extra = db.query(func.sum(models.MovimientosCaja.monto))\
         .filter(
             models.MovimientosCaja.id_sucursal == sucursal_id,
             models.MovimientosCaja.fecha >= fecha_inicio,
             models.MovimientosCaja.fecha <= fecha_fin,
-            models.MovimientosCaja.tipo == models.TipoMovimientoCaja.INGRESO
+            models.MovimientosCaja.tipo == models.TipoMovimientoCaja.INGRESO,
+            models.MovimientosCaja.id_documento_asociado.is_(None)
         ).scalar() or 0
         
     egresos_extra = db.query(func.sum(models.MovimientosCaja.monto))\
@@ -766,18 +767,19 @@ def calcular_resumen_periodo(db: Session, sucursal_id: int, fecha_inicio: dateti
             models.MovimientosCaja.id_sucursal == sucursal_id,
             models.MovimientosCaja.fecha >= fecha_inicio,
             models.MovimientosCaja.fecha <= fecha_fin,
-            models.MovimientosCaja.tipo == models.TipoMovimientoCaja.EGRESO
+            models.MovimientosCaja.tipo == models.TipoMovimientoCaja.EGRESO,
+            models.MovimientosCaja.id_documento_asociado.is_(None)
         ).scalar() or 0
         
     saldo_teorico = saldo_inicial + ventas + ingresos_extra - compras - egresos_extra
     
     return {
-        "saldo_inicial": saldo_inicial,
-        "ingresos_ventas": ventas,
-        "egresos_compras": compras,
-        "ingresos_extra": ingresos_extra,
-        "egresos_extra": egresos_extra,
-        "saldo_teorico": saldo_teorico
+        "saldo_inicial": int(saldo_inicial),
+        "ingresos_ventas": int(ventas),
+        "egresos_compras": int(compras),
+        "ingresos_extra": int(ingresos_extra),
+        "egresos_extra": int(egresos_extra),
+        "saldo_teorico": int(saldo_teorico)
     }
 
 def get_reporte_caja_historico(db, fecha_inicio: datetime, fecha_fin: datetime, sucursal_id: Optional[int] = None, usuario_id: Optional[int] = None):

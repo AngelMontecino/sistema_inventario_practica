@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block title %}Gestión de Caja{% endblock %}
 
@@ -24,12 +25,12 @@
                 {% if resumen and resumen.estado == 'ABIERTA' %}
                     <h2 class="card-title pricing-card-title text-success">ABIERTA</h2>
                     <ul class="list-unstyled mt-3 mb-4">
-                        <li><strong>Saldo Inicial:</strong> ${{ resumen.saldo_inicial }}</li>
-                        <li><strong>Ventas (Ingresos):</strong> ${{ resumen.ingresos_ventas }}</li>
-                        <li><strong>Compras (Egresos):</strong> ${{ resumen.egresos_compras }}</li>
-                        <li><strong>Otros Ingresos:</strong> ${{ resumen.ingresos_extra }}</li>
-                        <li><strong>Otros Egresos:</strong> ${{ resumen.egresos_extra }}</li>
-                        <li class="border-top pt-2 mt-2"><strong>Saldo Teórico Actual:</strong> ${{ resumen.saldo_teorico }}</li>
+                        <li><strong>Saldo Inicial:</strong> ${{ resumen.saldo_inicial|intcomma }}</li>
+                        <li><strong>Ventas (Ingresos):</strong> ${{ resumen.ingresos_ventas|intcomma }}</li>
+                        <li><strong>Compras (Egresos):</strong> ${{ resumen.egresos_compras|intcomma }}</li>
+                        <li><strong>Otros Ingresos:</strong> ${{ resumen.ingresos_extra|intcomma }}</li>
+                        <li><strong>Otros Egresos:</strong> ${{ resumen.egresos_extra|intcomma }}</li>
+                        <li class="border-top pt-2 mt-2"><strong>Saldo Teórico Actual:</strong> ${{ resumen.saldo_teorico|intcomma }}</li>
                     </ul>
                     <a href="{% url 'cerrar_caja' %}" class="w-100 btn btn-lg btn-danger">Cerrar Caja</a>
                 {% else %}

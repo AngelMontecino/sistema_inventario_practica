@@ -43,7 +43,7 @@
         <div class="card text-dark bg-light mb-3 border-secondary">
             <div class="card-header">Compras/Gastos (Egresos)</div>
             <div class="card-body">
-                <h4 class="card-title text-danger">- ${{ detalle.egresos_compras|add:detalle.egresos_extra|intcomma }}</h4>
+                <h4 class="card-title text-danger">- ${{ detalle.total_egresos|intcomma }}</h4>
             </div>
         </div>
     </div>
