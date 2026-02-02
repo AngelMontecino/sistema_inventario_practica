@@ -23,12 +23,12 @@ def crear_categoria(
     return crud.create_categoria(db=db, categoria=categoria)
 
 @router.get("/categorias/", response_model=List[schemas.CategoriaResponse])
-def listar_categorias(db: Session = Depends(get_db)):
+def listar_categorias(db: Session = Depends(get_db), current_user: models.Usuario = Depends(get_current_active_user)):
     # Devuelve el árbol completo (categorías y subcategorías)
     return crud.get_categorias_arbol(db)
 
 @router.get("/categorias/{categoria_id}", response_model=schemas.CategoriaResponse)
-def obtener_categoria(categoria_id: int, db: Session = Depends(get_db)):
+def obtener_categoria(categoria_id: int, db: Session = Depends(get_db), current_user: models.Usuario = Depends(get_current_active_user)):
     # Devuelve categoría específica con sus hijas
     db_categoria = crud.get_categoria(db, categoria_id=categoria_id)
     if not db_categoria:
@@ -79,7 +79,8 @@ def listar_productos(
     unidad_medida: Optional[str] = None,
     precio_min: Optional[float] = None,
     precio_max: Optional[float] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_active_user)
 ):
     return crud.get_productos(
         db, 
@@ -93,7 +94,7 @@ def listar_productos(
     )
 
 @router.get("/{producto_id}", response_model=schemas.ProductoResponse)
-def obtener_producto(producto_id: int, db: Session = Depends(get_db)):
+def obtener_producto(producto_id: int, db: Session = Depends(get_db), current_user: models.Usuario = Depends(get_current_active_user)):
     db_producto = crud.get_producto(db, producto_id=producto_id)
     if db_producto is None:
         raise HTTPException(status_code=404, detail="Producto no encontrado")

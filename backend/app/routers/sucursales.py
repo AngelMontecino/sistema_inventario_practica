@@ -41,7 +41,8 @@ def crear_sucursal(
 def listar_sucursales(
     skip: int = 0, 
     limit: int = 100, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_active_user)
 ):
     return crud.get_sucursales(db, skip=skip, limit=limit)
 
