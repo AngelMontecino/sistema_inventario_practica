@@ -63,7 +63,7 @@ def lista_productos(request):
         "precio_max": precio_max
     }
 
-    return render(request, "productos.html", context)
+    return render(request, "productos/productos.html", context)
 
 @token_required
 def crear_producto(request):
@@ -110,7 +110,7 @@ def crear_producto(request):
     except httpx.RequestError:
         pass 
 
-    return render(request, "crear_producto.html", {"categorias": categorias, "error": error})
+    return render(request, "productos/crear_producto.html", {"categorias": categorias, "error": error})
 
 @token_required
 def crear_categoria(request):
@@ -149,7 +149,7 @@ def crear_categoria(request):
     except httpx.RequestError:
         pass
 
-    return render(request, "crear_categoria.html", {"categorias": categorias, "error": error})
+    return render(request, "productos/crear_categoria.html", {"categorias": categorias, "error": error})
 
 @token_required
 def editar_producto(request, pk):
@@ -203,7 +203,7 @@ def editar_producto(request, pk):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "editar_producto.html", {"producto": producto, "categorias": categorias, "error": error})
+    return render(request, "productos/editar_producto.html", {"producto": producto, "categorias": categorias, "error": error})
 
 def _aplanar_categorias(categorias_raw, nivel=0):
     lista_plana = []
@@ -264,7 +264,7 @@ def asignar_inventario(request, pk):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "asignar_inventario.html", {"producto": producto, "sucursales": sucursales, "error": error})
+    return render(request, "inventario/asignar_inventario.html", {"producto": producto, "sucursales": sucursales, "error": error})
 
 @token_required
 def lista_inventario(request):
@@ -297,7 +297,7 @@ def lista_inventario(request):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "inventario.html", {
+    return render(request, "inventario/inventario.html", {
         "inventario": inventario, 
         "sucursales": sucursales,
         "sucursal_seleccionada": int(sucursal_seleccionada) if sucursal_seleccionada else None,
@@ -337,7 +337,7 @@ def detalle_inventario(request, pk):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "detalle_inventario.html", {"detalles": detalles, "producto": producto, "error": error})
+    return render(request, "inventario/detalle_inventario.html", {"detalles": detalles, "producto": producto, "error": error})
 
 @token_required
 def editar_inventario(request, pk):
@@ -382,4 +382,4 @@ def editar_inventario(request, pk):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "editar_inventario.html", {"item": item, "error": error})
+    return render(request, "inventario/editar_inventario.html", {"item": item, "error": error})

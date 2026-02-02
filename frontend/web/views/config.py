@@ -25,7 +25,7 @@ def lista_sucursales(request):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "sucursales.html", {"sucursales": sucursales, "error": error})
+    return render(request, "sucursales/sucursales.html", {"sucursales": sucursales, "error": error})
 
 @token_required
 def crear_sucursal(request):
@@ -55,7 +55,7 @@ def crear_sucursal(request):
         except httpx.RequestError as exc:
             error = f"Error de conexión: {exc}"
 
-    return render(request, "crear_sucursal.html", {"error": error})
+    return render(request, "sucursales/crear_sucursal.html", {"error": error})
 
 @token_required
 def editar_sucursal(request, pk):
@@ -109,7 +109,7 @@ def editar_sucursal(request, pk):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "editar_sucursal.html", {"sucursal": sucursal, "error": error})
+    return render(request, "sucursales/editar_sucursal.html", {"sucursal": sucursal, "error": error})
 
 # --- USUARIOS ---
 
@@ -135,7 +135,7 @@ def lista_usuarios(request):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "usuarios.html", {"usuarios": usuarios, "error": error})
+    return render(request, "administracion/usuarios.html", {"usuarios": usuarios, "error": error})
 
 @admin_required
 def crear_usuario(request):
@@ -177,7 +177,7 @@ def crear_usuario(request):
     except:
         pass
 
-    return render(request, "crear_usuario.html", {"sucursales": sucursales, "error": error})
+    return render(request, "administracion/crear_usuario.html", {"sucursales": sucursales, "error": error})
 
 @admin_required
 def editar_usuario(request, pk):
@@ -228,4 +228,4 @@ def editar_usuario(request, pk):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "editar_usuario.html", {"usuario": usuario, "sucursales": sucursales, "error": error})
+    return render(request, "administracion/editar_usuario.html", {"usuario": usuario, "sucursales": sucursales, "error": error})
