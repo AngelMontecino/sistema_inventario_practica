@@ -512,15 +512,25 @@ def create_documento(db: Session, documento: schemas.DocumentoCreate):
         factor_desc = (100 - detalle.descuento) / 100
         total_doc += float(precio_final * detalle.cantidad) * float(factor_desc)
 
-        # Logica para VENTA
+        # Verificar Inventario
+        inventario = get_inventario_by_sucursal_producto(
+            db, 
+            documento.id_sucursal, 
+            detalle.id_producto,
+            ubicacion=detalle.ubicacion_especifica
+        )
+
         if documento.tipo_operacion == models.TipoOperacion.VENTA:
+            # VENTA: Descontar Stock
+            # Validar stock suficiente
             if not inventario or inventario.cantidad < detalle.cantidad:
                 db.rollback()
-                return {"error": f"Stock insuficiente para producto ID {detalle.id_producto}"}
+                ubicacion_msg = f" en {detalle.ubicacion_especifica}" if detalle.ubicacion_especifica else ""
+                raise ValueError(f"Stock insuficiente para el producto {detalle.id_producto}{ubicacion_msg}")
             
-            # Descontar stock
+            # Descontar
             inventario.cantidad -= detalle.cantidad
-            
+            db.add(inventario)
         # Logica para COMPRA
         elif documento.tipo_operacion == models.TipoOperacion.COMPRA:
             if not inventario:

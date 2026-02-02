@@ -1,6 +1,7 @@
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views
+from . import api_new
 
 urlpatterns = [
     # Redirigir raíz a login (o home si logueado, controlado en view)
@@ -50,5 +51,5 @@ urlpatterns = [
 
     # API Proxies
     path('api/productos/buscar', views.api_buscar_productos, name='api_buscar_productos'),
-    path('api/stock/consultar', views.api_ver_stock, name='api_ver_stock'),
+    path('api/stock/consultar_v2', api_new.api_ver_stock_fresh, name='api_ver_stock'),
 ]

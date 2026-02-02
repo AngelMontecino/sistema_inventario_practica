@@ -994,23 +994,26 @@ def api_ver_stock(request):
     p_id = request.GET.get("id_producto")
     s_id = request.GET.get("id_sucursal")
     
-    try:
-        # Usamos endpoint inventarios con filtros
-        params = {"sucursal_id": s_id, "producto_id": p_id}
-        response = httpx.get(f"{BACKEND_URL}/inventarios/", params=params, headers=headers)
-        data = response.json()
-        cantidad = 0
-        if data:
-            # Sumar si hubiera mltiples ubicaciones
-            for item in data:
-                cantidad += item.get("total_cantidad", 0) # El endpoint inventarios/ puede devolver lista
-                # Ojo: endpoint inventarios devuelve lista de objetos InventarioResponse.
-                # InventarioResponse tiene 'cantidad'.
-                # get_inventarios returns List[Inventario].
+        print("DEBUG: Executing api_ver_stock V2")
+        # Validar inputs
+        if not p_id: 
+            return JsonResponse({"stock": 0, "detalles": []})
         
-        # Correccion: endpoint devuelve lista de inventario objects
-        # Sumamos 'cantidad'
-        inv_total = sum(i['cantidad'] for i in data)
-        return JsonResponse({"stock": inv_total})
+        # Preparar params, filtrando vacíos
+        params = {"producto_id": p_id}
+        if s_id and s_id != "None" and s_id != "":
+            params["sucursal_id"] = int(s_id)
+            
+        response = httpx.get(f"{BACKEND_URL}/inventarios/", params=params, headers=headers)
+        
+        if response.status_code == 200:
+            data = response.json()
+            # data es lista de inventarios
+            inv_total = sum(i.get('cantidad', 0) for i in data)
+            return JsonResponse({"stock": inv_total, "detalles": data})
+        else:
+            # Si hay error en backend, retornar 0 pero loguear o enviar error
+            return JsonResponse({"stock": 0, "detalles": [], "error_backend": response.text})
+
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)

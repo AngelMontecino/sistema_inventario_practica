@@ -82,7 +82,7 @@
     <div class="card-body">
         <!-- Input Linea -->
         <div class="row g-2 align-items-end mb-3">
-            <div class="col-md-5 position-relative">
+            <div class="col-md-3 position-relative">
                 <label class="form-label small text-muted">Buscar Producto (Nombre/Código)</label>
                 <input type="text" class="form-control" id="searchProduct" placeholder="Escriba para buscar..." autocomplete="off">
                 <ul class="list-group shadow" id="searchResults"></ul>
@@ -98,7 +98,11 @@
                     <span class="input-group-text small" id="stockDisplay" title="Stock Disponible">?</span>
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2" id="divUbicacion">
+                <label class="form-label small text-muted">Ubicación</label>
+                <select class="form-select" id="lineUbicacion"></select>
+            </div>
+            <div class="col-md-1">
                 <label class="form-label small text-muted">Desc %</label>
                 <input type="number" class="form-control" id="lineDesc" value="0" min="0" max="100">
             </div>
@@ -117,6 +121,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Producto</th>
+                        <th>Ubicación</th>
                         <th class="text-end">Precio</th>
                         <th class="text-center">Cant.</th>
                         <th class="text-center">Desc %</th>
@@ -124,6 +129,10 @@
                         <th class="text-center" style="width: 50px;"></th>
                     </tr>
                 </thead>
+                <tbody id="detailTableBody">
+                    <!-- Dynamic Rows -->
+                </tbody>
+                <tfoot class="table-light fw-bold">
                 <tbody id="detailTableBody">
                     <!-- Dynamic Rows -->
                 </tbody>
@@ -218,14 +227,51 @@
             qtyInput.value = 1;
 
             // Consultar Stock
-            fetch(`{% url 'api_ver_stock' %}?id_producto=${prod.id_producto}&id_sucursal=${sucursalId}`)
-                .then(res => res.json())
+            const timestamp = new Date().getTime();
+            fetch(`{% url 'api_ver_stock' %}?id_producto=${prod.id_producto}&id_sucursal=${sucursalId}&_=${timestamp}`)
+                .catch(err => {
+                    console.error("Error fetching stock:", err);
+                    stockDisplay.textContent = "Err";
+                    stockDisplay.classList.add("text-danger");
+                })
+                .then(res => res ? res.json() : null)
                 .then(data => {
-                    stockDisplay.textContent = data.stock || 0;
+                    if (!data) return;
+
+                    stockDisplay.textContent = data.stock !== undefined ? data.stock : 0;
                     if (data.stock <= 0) {
-                        stockDisplay.classList.add("text-danger");
+                         stockDisplay.classList.add("text-danger");
                     } else {
-                        stockDisplay.classList.remove("text-danger");
+                         stockDisplay.classList.remove("text-danger");
+                    }
+
+                    // Manejo de Ubicaciones
+                    const divUbicacion = document.getElementById("divUbicacion");
+                    const selUbicacion = document.getElementById("lineUbicacion");
+                    selUbicacion.innerHTML = "";
+                    
+                    if (data.detalles) {
+                        divUbicacion.style.display = "block";
+                        let hasOptions = false;
+
+                        data.detalles.forEach(inv => {
+                            if (inv.cantidad > 0) {
+                                let opt = document.createElement("option");
+                                opt.value = inv.ubicacion_especifica;
+                                opt.text = `${inv.ubicacion_especifica} (${inv.cantidad})`;
+                                selUbicacion.appendChild(opt);
+                                hasOptions = true;
+                            }
+                        });
+                        
+                        if (!hasOptions) {
+                             let opt = document.createElement("option");
+                             opt.text = "Sin Stock";
+                             opt.disabled = true;
+                             selUbicacion.appendChild(opt);
+                        }
+                    } else {
+                        divUbicacion.style.display = "none";
                     }
                 });
             
@@ -259,8 +305,13 @@
             
             if (cantidad <= 0) return alert("Cantidad inválida");
 
+            const ubicacionSeleccionada = (document.getElementById("divUbicacion").style.display !== "none" || document.getElementById("lineUbicacion").offsetParent !== null) 
+                                          ? document.getElementById("lineUbicacion").value 
+                                          : "";
+            
             // Verificar si ya existe el producto en el detalle (sumar cantidad)
-            const existeIndex = detalles.findIndex(d => d.id_producto === currentProduct.id_producto);
+            const existeIndex = detalles.findIndex(d => d.id_producto === currentProduct.id_producto && d.ubicacion_especifica === ubicacionSeleccionada);
+            
             if (existeIndex >= 0) {
                 detalles[existeIndex].cantidad += cantidad;
                 detalles[existeIndex].precio = precio; 
@@ -273,7 +324,8 @@
                     precio: precio,
                     cantidad: cantidad,
                     descuento: descuento,
-                    subtotal: (precio * cantidad) * (1 - descuento/100)
+                    subtotal: (precio * cantidad) * (1 - descuento/100),
+                    ubicacion_especifica: ubicacionSeleccionada
                 });
             }
 
@@ -285,6 +337,7 @@
             descInput.value = 0;
             subtotalInput.value = "";
             stockDisplay.textContent = "?";
+            document.getElementById("lineUbicacion").innerHTML = ""; // Limpiar selector
             
             renderTable();
         });
@@ -303,13 +356,14 @@
                 const row = `
                     <tr>
                         <td>${d.nombre}</td>
+                        <td>${d.ubicacion_especifica || '-'}</td>
                         <td class="text-end">$${d.precio}</td>
                         <td class="text-center">${d.cantidad}</td>
                         <td class="text-center">${d.descuento}%</td>
                         <td class="text-end">$${d.subtotal.toLocaleString("es-CL")}</td>
                         <td class="text-center">
                             <button class="btn btn-sm btn-outline-danger" onclick="removeLine(${index})">
-                                <i class="bi bi-trash"></i> Eliminar
+                                <i class="bi bi-trash"></i>
                             </button>
                         </td>
                     </tr>
@@ -330,12 +384,11 @@
             const rowNeto = document.getElementById("rowNeto");
             const rowIva = document.getElementById("rowIva");
             
-            if (tipoDoc === "FACTURA") {
+            if (tipoDoc === "FACTURA" || tipoDoc === "BOLETA") {
                 // Mostrar desglose
                 rowNeto.style.display = "table-row";
                 rowIva.style.display = "table-row";
             } else {
-                // Boleta: Ocultar desglose (solo Total)
                 rowNeto.style.display = "none";
                 rowIva.style.display = "none";
             }
@@ -353,6 +406,14 @@
             }
             
             const terceroId = document.getElementById("tercero").value;
+            const tipoDoc = document.getElementById("tipoDocumento").value;
+
+            // Validación: Factura requiere Tercero
+            if (tipoDoc === "FACTURA" && !terceroId) {
+                alert("Para emitir una FACTURA debe seleccionar un Cliente o Proveedor.");
+                return;
+            }
+            
             /* Validación si es venta requiere cliente? Depende regla negocio. */
             
             const payload = {
@@ -372,7 +433,8 @@
                     cantidad: d.cantidad,
                     cantidad: d.cantidad,
                     precio_unitario: d.precio,
-                    descuento: d.descuento
+                    descuento: d.descuento,
+                    ubicacion_especifica: d.ubicacion_especifica
                 })),
                 total: 0 // Backend calcula
             };

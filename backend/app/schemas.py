@@ -190,6 +190,7 @@ class DetalleDocumentoBase(BaseModel):
 
 class DetalleDocumentoCreate(DetalleDocumentoBase):
     id_producto: int
+    ubicacion_especifica: Optional[str] = None
 
 class DetalleDocumentoResponse(DetalleDocumentoBase):
     id_detalle: int
