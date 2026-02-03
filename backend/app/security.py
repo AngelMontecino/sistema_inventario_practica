@@ -4,11 +4,15 @@ from typing import Optional
 from jose import jwt
 from passlib.context import CryptContext
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Configuración JWT
-# se encuentra en el .env
-SECRET_KEY = "supersecreto_cambiar_en_produccion" 
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

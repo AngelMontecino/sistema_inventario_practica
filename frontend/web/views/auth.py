@@ -2,8 +2,10 @@ from django.shortcuts import render, redirect
 import httpx
 from django.conf import settings
 
-# Ajustar URL si está en settings o hardcoded
-BACKEND_URL = "http://127.0.0.1:8001"
+
+from django.conf import settings
+
+BACKEND_URL = settings.BACKEND_URL
 
 def login_view(request):
     # Si ya tiene sesión, redirigir directo

@@ -4,7 +4,9 @@ import json
 import httpx
 from ..decorators import token_required
 
-BACKEND_URL = "http://127.0.0.1:8001"
+from django.conf import settings
+
+BACKEND_URL = settings.BACKEND_URL
 
 @token_required
 def crear_documento(request):

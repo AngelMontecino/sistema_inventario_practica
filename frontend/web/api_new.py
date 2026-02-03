@@ -3,7 +3,8 @@ from django.http import JsonResponse
 from django.conf import settings
 
 # Configuración del Backend 
-BACKEND_URL = "http://127.0.0.1:8001"
+# Configuración del Backend 
+BACKEND_URL = settings.BACKEND_URL
 
 def api_ver_stock_fresh(request):
     # Obtener token de sesión
