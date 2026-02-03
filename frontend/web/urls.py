@@ -1,11 +1,14 @@
 from django.urls import path
 from django.views.generic import RedirectView
 from . import views
+from .views import home # Importar home
 from . import api_new
 
 urlpatterns = [
     # Redirigir raíz a login (o home si logueado, controlado en view)
-    path('', RedirectView.as_view(pattern_name='login', permanent=False)),
+    # Redirigir raíz a Dashboard
+    path('', home.dashboard_view, name='home'),
+    path('dashboard/', home.dashboard_view, name='dashboard'),
     
     # Auth
     path('login/', views.login_view, name='login'),

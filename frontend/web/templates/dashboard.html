@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Dashboard - Sistema Inventario{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Panel de Control</h1>
+    
+    {% if request.session.rol == 'ADMIN' and sucursales %}
+    <form method="get" class="d-flex align-items-center">
+        <label class="me-2 text-muted small fw-bold">Ver Sucursal:</label>
+        <select name="sucursal_id" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 200px;">
+             <option value="" {% if not sucursal_seleccionada %}selected{% endif %}>Global (Todas)</option>
+             {% for suc in sucursales %}
+             <option value="{{ suc.id_sucursal }}" {% if sucursal_seleccionada == suc.id_sucursal %}selected{% endif %}>
+                {{ suc.nombre }}
+             </option>
+             {% endfor %}
+        </select>
+    </form>
+    {% endif %}
+</div>
+
+{% if error %}
+<div class="alert alert-danger" role="alert">
+    {{ error }}
+</div>
+{% endif %}
+
+<!-- KPIs Cards -->
+<div class="row mb-4">
+    <!-- Ventas Hoy -->
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3 shadow-sm">
+            <div class="card-header">Ventas de Hoy</div>
+            <div class="card-body">
+                <h2 class="card-title">${{ stats.ventas_dia|intcomma }}</h2>
+                <p class="card-text">Total facturado en el día.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Productos -->
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3 shadow-sm">
+            <div class="card-header">Productos Activos</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ stats.total_productos }}</h2>
+                <p class="card-text">Total de productos en inventario.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas (Contador) -->
+    <div class="col-md-4">
+        <div class="card text-white bg-danger mb-3 shadow-sm">
+            <div class="card-header">Stock Crítico</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ stats.alertas_stock|length }}</h2>
+                <p class="card-text">Productos bajo mínimo.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas Stock Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0 text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Alertas de Stock Bajo</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Ubicación</th>
+                                <th class="text-center">Stock Actual</th>
+                                <th class="text-center">Mínimo</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alerta in stats.alertas_stock %}
+                            <tr>
+                                <td>{{ alerta.nombre }}</td>
+                                <td><span class="badge bg-secondary">{{ alerta.ubicacion }}</span></td>
+                                <td class="text-center fw-bold text-danger">{{ alerta.cantidad }}</td>
+                                <td class="text-center">{{ alerta.stock_minimo }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'editar_inventario' alerta.id_producto %}" class="btn btn-sm btn-outline-primary">
+                                        Reponer
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    ¡Excelente! No hay productos con stock crítico.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

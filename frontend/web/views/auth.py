@@ -8,7 +8,7 @@ BACKEND_URL = "http://127.0.0.1:8001"
 def login_view(request):
     # Si ya tiene sesión, redirigir directo
     if request.session.get("access_token"):
-         return redirect("lista_productos")
+         return redirect("home")
 
     if request.method == "POST":
         username = request.POST.get("username")
@@ -33,7 +33,7 @@ def login_view(request):
                 request.session["id_sucursal"] = data.get("id_sucursal")
                 
                 # Redirigir al inicio o lista de productos
-                return redirect("lista_productos") 
+                return redirect("home") 
             else:
                 # Login fallido
                 error_msg = "Credenciales inválidas"
