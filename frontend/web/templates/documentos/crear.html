@@ -84,8 +84,13 @@
         <div class="row g-2 align-items-end mb-3">
             <div class="col-md-3 position-relative">
                 <label class="form-label small text-muted">Buscar Producto (Nombre/Código)</label>
-                <input type="text" class="form-control" id="searchProduct" placeholder="Escriba para buscar..." autocomplete="off">
-                <ul class="list-group shadow" id="searchResults"></ul>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchProduct" placeholder="Escriba para buscar..." autocomplete="off">
+                    <button class="btn btn-outline-secondary" type="button" id="btnClearSelection" title="Limpiar selección">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <ul class="list-group shadow" id="searchResults" style="top: 100%;"></ul>
             </div>
             <div class="col-md-2">
                 <label class="form-label small text-muted">Precio Unit.</label>
@@ -168,6 +173,7 @@
   
         let detalles = []; 
         let currentProduct = null;
+        let currentBasePrice = 0; 
         const sucursalId = "{{ sucursal_id }}";
 
         // Elements
@@ -180,6 +186,24 @@
         const stockDisplay = document.getElementById("stockDisplay");
         const tableBody = document.getElementById("detailTableBody");
         const btnAdd = document.getElementById("btnAddLine");
+        const btnClear = document.getElementById("btnClearSelection");
+
+        // --- Limpiar Selección ---
+        btnClear.addEventListener("click", function() {
+            currentProduct = null;
+            searchInput.value = "";
+            priceInput.value = "";
+            qtyInput.value = 1;
+            descInput.value = 0;
+            subtotalInput.value = "";
+            stockDisplay.textContent = "?";
+            stockDisplay.classList.remove("text-danger");
+            document.getElementById("lineUbicacion").innerHTML = "";
+            document.getElementById("divUbicacion").style.display = "block"; 
+             document.getElementById("lineUbicacion").innerHTML = ""; 
+            
+            searchInput.focus();
+        });
 
         // --- Búsqueda de Productos ---
         let debounceTimer;
@@ -222,9 +246,18 @@
         function selectProduct(prod) {
             currentProduct = prod;
             searchInput.value = prod.nombre;
-            priceInput.value = prod.precio_venta;
+            
+            const tipoOp = document.getElementById("tipoOperacion").value;
+            if (tipoOp === "COMPRA") {
+                currentBasePrice = prod.costo_neto;
+            } else {
+                currentBasePrice = prod.precio_venta;
+            }
+            priceInput.value = currentBasePrice;
+
             resultsList.style.display = 'none';
             qtyInput.value = 1;
+            descInput.value = 0; // Reset descuento
 
             // Consultar Stock
             const timestamp = new Date().getTime();
@@ -291,6 +324,48 @@
         
         // Recalcular al cambiar tipo de documento
         document.getElementById("tipoDocumento").addEventListener("change", renderTable);
+        
+        // Actualizar precio si cambia el tipo de operación
+        document.getElementById("tipoOperacion").addEventListener("change", function() {
+            if (currentProduct) {
+                if (this.value === "COMPRA") {
+                    currentBasePrice = currentProduct.costo_neto;
+                } else {
+                    currentBasePrice = currentProduct.precio_venta;
+                }
+               
+                priceInput.value = currentBasePrice;
+                descInput.value = 0;
+                updateLineSubtotal();
+            }
+        });
+
+   
+        priceInput.addEventListener("blur", function() {
+            if (!currentProduct || currentBasePrice === 0) return;
+
+            const enteredPrice = parseFloat(this.value);
+            if (isNaN(enteredPrice)) return;
+
+
+            if (enteredPrice !== currentBasePrice) {
+               
+                
+                let descPct = (1 - (enteredPrice / currentBasePrice)) * 100;
+                
+               
+                descPct = Math.round(descPct * 100) / 100;
+
+                descInput.value = descPct;
+                
+               
+                this.value = currentBasePrice;
+                
+              
+                
+                updateLineSubtotal();
+            }
+        });
 
 
         // --- Agregar Linea ---
