@@ -46,14 +46,34 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Variables de Entorno (Backend)
-Crea un archivo `.env` en `backend/` con las credenciales de tu BD PostgreSQL:
+### 2. Configuración de Variables de Entorno (.env)
+
+Es necesario crear un archivo `.env` en cada carpeta del proyecto (`backend/` y `frontend/`) para manejar configuraciones.
+
+#### Backend (`backend/.env`)
+Crea el archivo `backend/.env` con el siguiente contenido:
 ```env
+# Base de datos
 DB_USER=angel
 DB_PASSWORD=tu_password
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=sistema_inventario
+
+# Seguridad
+SECRET_KEY=tu_secret_key_segura_para_production
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
+
+#### Frontend (`frontend/.env`)
+Crea el archivo `frontend/.env`:
+```env
+# Django 
+DJANGO_SECRET_KEY=tu_django_secret_key_segura
+DEBUG=True
+
+# Backend 
+BACKEND_URL=http://127.0.0.1:8001
 ```
 
 ### 3. Ejecutar el Proyecto
