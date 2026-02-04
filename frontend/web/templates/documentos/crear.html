@@ -22,64 +22,58 @@
         <h2>Crear Documento</h2>
     </div>
     <div class="col-auto">
-        <a href="{% url 'gestion_caja' %}" class="btn btn-outline-danger">
-            <i class="bi bi-cash-coin"></i> Gestión de Caja
-        </a>
+        <fluent-button appearance="accent" style="--accent-fill-rest: #dc3545;" onclick="window.location.href='{% url 'gestion_caja' %}'">
+            <i class='bx bx-money'></i> Gestión de Caja
+        </fluent-button>
     </div>
 </div>
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0">Cabecera del Documento</h5>
-    </div>
-    <div class="card-body">
-        <form id="headerForm" class="row g-3">
-            <div class="col-md-3">
-                <label for="tipoOperacion" class="form-label">Operación</label>
-                <select class="form-select" id="tipoOperacion">
-                    <option value="VENTA" selected>Venta</option>
-                    <option value="COMPRA">Compra</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="tipoDocumento" class="form-label">Tipo Doc.</label>
-                <select class="form-select" id="tipoDocumento">
-                    <option value="BOLETA">Boleta</option>
-                    <option value="FACTURA">Factura</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="tercero" class="form-label">Cliente / Proveedor</label>
-                <select class="form-select" id="tercero">
-                    <option value="">-- Seleccionar --</option>
-                    {% for t in terceros %}
-                        <option value="{{ t.id_tercero }}" data-cliente="{{ t.es_cliente }}" data-proveedor="{{ t.es_proveedor }}">
-                            {{ t.nombre }} ({{ t.rut }})
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Fecha</label>
-                <input type="text" class="form-control" value="{% now 'd/m/Y' %}" disabled>
-            </div>
-            <div class="col-md-2">
-                <label for="folio" class="form-label">Folio</label>
-                <input type="text" class="form-control" id="folio" placeholder="Auto">
-            </div>
-            <div class="col-md-12">
-                 <label for="observaciones" class="form-label">Observaciones</label>
-                 <textarea class="form-control" id="observaciones" rows="2"></textarea>
-            </div>
-        </form>
-    </div>
-</div>
+<fluent-card class="mb-4 p-4">
+    <h5 class="mb-3 fw-bold text-primary border-bottom pb-2">Cabecera del Documento</h5>
+    <form id="headerForm" class="row g-3">
+        <div class="col-md-3">
+            <label for="tipoOperacion" class="form-label small fw-bold">Operación</label>
+            <select class="form-select" id="tipoOperacion">
+                <option value="VENTA" selected>Venta</option>
+                <option value="COMPRA">Compra</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="tipoDocumento" class="form-label small fw-bold">Tipo Doc.</label>
+            <select class="form-select" id="tipoDocumento">
+                <option value="BOLETA">Boleta</option>
+                <option value="FACTURA">Factura</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="tercero" class="form-label small fw-bold">Cliente / Proveedor</label>
+            <select class="form-select" id="tercero">
+                <option value="">-- Seleccionar --</option>
+                {% for t in terceros %}
+                    <option value="{{ t.id_tercero }}" data-cliente="{{ t.es_cliente }}" data-proveedor="{{ t.es_proveedor }}">
+                        {{ t.nombre }} ({{ t.rut }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Fecha</label>
+            <input type="text" class="form-control" value="{% now 'd/m/Y' %}" disabled>
+        </div>
+        <div class="col-md-2">
+            <label for="folio" class="form-label small fw-bold">Folio</label>
+            <input type="text" class="form-control" id="folio" placeholder="Auto">
+        </div>
+        <div class="col-md-12">
+             <label for="observaciones" class="form-label small fw-bold">Observaciones</label>
+             <textarea class="form-control" id="observaciones" rows="2"></textarea>
+        </div>
+    </form>
+</fluent-card>
 
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0">Detalle de Productos</h5>
-    </div>
-    <div class="card-body">
+<fluent-card class="mb-4 p-4">
+    <h5 class="mb-3 fw-bold text-secondary border-bottom pb-2">Detalle de Productos</h5>
+    
         <!-- Input Linea -->
         <div class="row g-2 align-items-end mb-3">
             <div class="col-md-3 position-relative">
@@ -87,7 +81,7 @@
                 <div class="input-group">
                     <input type="text" class="form-control" id="searchProduct" placeholder="Escriba para buscar..." autocomplete="off">
                     <button class="btn btn-outline-secondary" type="button" id="btnClearSelection" title="Limpiar selección">
-                        <i class="bi bi-x-lg"></i>
+                        <i class='bx bx-x'></i>
                     </button>
                 </div>
                 <ul class="list-group shadow" id="searchResults" style="top: 100%;"></ul>
@@ -116,7 +110,7 @@
                  <input type="text" class="form-control bg-light" id="lineSubtotal" disabled>
             </div>
             <div class="col-md-1 d-grid">
-                <button class="btn btn-primary" id="btnAddLine"><i class="bi bi-plus-lg"></i> Agregar</button>
+                <button class="btn btn-primary" id="btnAddLine"><i class='bx bx-plus'></i></button>
             </div>
         </div>
 
@@ -160,13 +154,13 @@
                 </tfoot>
             </table>
         </div>
-    </div>
-    <div class="card-footer bg-white text-end py-3">
-         <button class="btn btn-success btn-lg px-5" id="btnSaveDocument">
-            <i class="bi bi-save"></i> Guardar Documento
-         </button>
-    </div>
-</div>
+        
+        <div class="text-end pt-4 border-top">
+             <fluent-button appearance="accent" class="px-5" id="btnSaveDocument" style="min-width: 200px;">
+                <i class='bx bx-save me-2'></i> Guardar Documento
+             </fluent-button>
+        </div>
+</fluent-card>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -438,7 +432,7 @@
                         <td class="text-end">$${d.subtotal.toLocaleString("es-CL")}</td>
                         <td class="text-center">
                             <button class="btn btn-sm btn-outline-danger" onclick="removeLine(${index})">
-                                <i class="bi bi-trash"></i>
+                                <i class='bx bx-trash'></i>
                             </button>
                         </td>
                     </tr>

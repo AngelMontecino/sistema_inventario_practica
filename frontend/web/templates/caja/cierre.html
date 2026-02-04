@@ -5,59 +5,60 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="card shadow-sm border-danger">
-            <div class="card-header bg-danger text-white">
-                <h4 class="mb-0">Cierre de Caja</h4>
+        <fluent-card class="p-4">
+            <div class="border-bottom pb-3 mb-4">
+                <h4 class="mb-0 fw-bold text-danger"><i class='bx bxs-lock-alt me-2'></i>Cierre de Caja</h4>
             </div>
-            <div class="card-body">
-                {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
+            
+            {% if error %}
+                <div class="alert alert-danger mb-4">{{ error }}</div>
+            {% endif %}
 
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded">
-                            <h6 class="text-muted">Saldo Teórico Esperado</h6>
-                            <h2 class="text-primary">${{ resumen.saldo_teorico|default:"0.00" }}</h2>
-                            <small>Calculado base + ventas - gastos</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Saldo Inicial
-                                <span>${{ resumen.saldo_inicial }}</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Ventas
-                                <span class="text-success">+${{ resumen.ingresos_ventas }}</span>
-                            </li>
-                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                Compras
-                                <span class="text-danger">-${{ resumen.egresos_compras }}</span>
-                            </li>
-                        </ul>
-                    </div>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <fluent-card class="p-3 bg-light h-100 border-0 shadow-none">
+                        <h6 class="text-muted small fw-bold text-uppercase">Saldo Teórico Esperado</h6>
+                        <h2 class="text-primary fw-bold my-2">${{ resumen.saldo_teorico|default:"0.00" }}</h2>
+                        <small class="text-muted"><i class='bx bx-calculator'></i> Calculado: base + ventas - gastos</small>
+                    </fluent-card>
                 </div>
-
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="monto_real" class="form-label fw-bold">Monto Real en Caja (Contado)</label>
-                        <div class="input-group input-group-lg">
-                            <span class="input-group-text">$</span>
-                            <input type="number" step="0.01" class="form-control" id="monto_real" name="monto_real" placeholder="0.00" required>
-                        </div>
-                        <div class="form-text text-danger">Cuente el dinero físico cuidadosamente. Si es diferente al teórico, se registrará como diferencia.</div>
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-danger btn-lg">Confirmar Cierre</button>
-                        <a href="{% url 'gestion_caja' %}" class="btn btn-outline-secondary">Cancelar</a>
-                    </div>
-                </form>
+                <div class="col-md-6">
+                     <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent ps-0">
+                            <span class="text-muted">Saldo Inicial</span>
+                            <span class="fw-bold">${{ resumen.saldo_inicial }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent ps-0">
+                            <span class="text-muted">Ventas</span>
+                            <span class="text-success fw-bold">+${{ resumen.ingresos_ventas }}</span>
+                        </li>
+                         <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent ps-0">
+                            <span class="text-muted">Compras</span>
+                            <span class="text-danger fw-bold">-${{ resumen.egresos_compras }}</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="monto_real" class="form-label fw-bold text-secondary">Monto Real en Caja (Contado)</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0 fw-bold">$</span>
+                        <input type="number" step="0.01" class="form-control border-start-0 ps-0" id="monto_real" name="monto_real" placeholder="0.00" required>
+                    </div>
+                    <div class="form-text text-danger mt-2"><i class='bx bx-error-circle'></i> Cuente el dinero físico cuidadosamente. Diferencias se registrarán automáticamente.</div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <fluent-button appearance="outline" onclick="window.location.href='{% url 'gestion_caja' %}'">Cancelar</fluent-button>
+                    <fluent-button appearance="accent" type="submit" style="--accent-fill-rest: #dc3545;">
+                        <i class='bx bx-lock-alt me-2'></i> Confirmar Cierre
+                    </fluent-button>
+                </div>
+            </form>
+        </fluent-card>
     </div>
 </div>
 {% endblock %}

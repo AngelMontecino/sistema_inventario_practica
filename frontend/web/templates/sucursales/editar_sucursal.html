@@ -7,62 +7,70 @@
     <div class="col-lg-6 col-md-8">
         
         <div class="mb-4">
-            <a href="{% url 'lista_sucursales' %}" class="text-decoration-none text-muted mb-2 d-inline-block">
-                <i class="bi bi-arrow-left me-1"></i>Volver al listado
-            </a>
-            <h2 class="fw-bold">Editar Sucursal</h2>
+        <div class="mb-4">
+            <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_sucursales' %}'">
+                <i class='bx bx-arrow-back me-1'></i> Volver al listado
+            </fluent-button>
         </div>
 
-        <div class="card shadow border-0 rounded-4">
-            <div class="card-body p-5">
-                {% if error %}
-                    <div class="alert alert-danger d-flex align-items-center mb-4">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <div>{{ error }}</div>
-                    </div>
-                {% endif %}
-
-                {% if sucursal %}
-                <form method="POST">
-                    {% csrf_token %}
-                    
-                    <div class="mb-4">
-                        <label for="nombre" class="form-label fw-bold">Nombre de la Sucursal <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-lg" id="nombre" name="nombre" value="{{ sucursal.nombre }}" required>
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="direccion" class="form-label fw-bold">Dirección</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
-                            <input type="text" class="form-control" id="direccion" name="direccion" value="{{ sucursal.direccion|default_if_none:'' }}">
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="telefono" class="form-label fw-bold">Teléfono</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-white"><i class="bi bi-telephone"></i></span>
-                            <input type="text" class="form-control" id="telefono" name="telefono" value="{{ sucursal.telefono|default_if_none:'' }}">
-                        </div>
-                    </div>
-
-                    <div class="mb-4 form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="es_principal" name="es_principal" {% if sucursal.es_principal %}checked{% endif %}>
-                        <label class="form-check-label" for="es_principal">Es Sucursal Principal</label>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
-                            <i class="bi bi-save me-2"></i>Actualizar Sucursal
-                        </button>
-                    </div>
-                </form>
-                {% else %}
-                    <div class="alert alert-warning">No se encontraron datos de la sucursal para editar.</div>
-                {% endif %}
+        <fluent-card class="p-5">
+             <div class="border-bottom pb-3 mb-4">
+                <h4 class="mb-0 fw-bold text-primary">
+                    <i class='bx bx-edit-alt me-2'></i>Editar Sucursal
+                </h4>
             </div>
-        </div>
+
+            {% if error %}
+                <div class="alert alert-danger d-flex align-items-center mb-4">
+                    <i class='bx bx-error-circle me-2 fs-4'></i>
+                    <div>{{ error }}</div>
+                </div>
+            {% endif %}
+
+            {% if sucursal %}
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label for="nombre" class="form-label small fw-bold text-secondary">Nombre de la Sucursal <span class="text-danger">*</span></label>
+                     <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class='bx bx-rename text-muted'></i></span>
+                        <input type="text" class="form-control form-control-lg border-start-0 ps-0" id="nombre" name="nombre" value="{{ sucursal.nombre }}" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="direccion" class="form-label small fw-bold text-secondary">Dirección</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class='bx bx-map text-muted'></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0" id="direccion" name="direccion" value="{{ sucursal.direccion|default_if_none:'' }}">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="telefono" class="form-label small fw-bold text-secondary">Teléfono</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class='bx bx-phone text-muted'></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0" id="telefono" name="telefono" value="{{ sucursal.telefono|default_if_none:'' }}">
+                    </div>
+                </div>
+
+                <div class="mb-4 form-check form-switch custom-switch p-3 bg-light rounded d-flex align-items-center">
+                    <input class="form-check-input ms-0 me-3 mt-0" type="checkbox" id="es_principal" name="es_principal" {% if sucursal.es_principal %}checked{% endif %} style="width: 3em; height: 1.5em;">
+                    <label class="form-check-label fw-bold mb-0" for="es_principal">Es Sucursal Principal</label>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_sucursales' %}'">Cancelar</fluent-button>
+                    <fluent-button appearance="accent" type="submit">
+                        <i class='bx bx-save me-2'></i> Actualizar Sucursal
+                    </fluent-button>
+                </div>
+            </form>
+            {% else %}
+                <div class="alert alert-warning">No se encontraron datos de la sucursal para editar.</div>
+            {% endif %}
+        </fluent-card>
     </div>
 </div>
 {% endblock %}

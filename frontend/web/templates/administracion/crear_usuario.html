@@ -3,58 +3,68 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Crear Nuevo Usuario</h4>
+        <fluent-card class="p-4">
+            <div class="border-bottom pb-3 mb-4">
+                <h4 class="mb-0 fw-bold text-primary"><i class='bx bx-user-plus me-2'></i>Crear Nuevo Usuario</h4>
             </div>
-            <div class="card-body">
-                {% if error %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
+            
+            {% if error %}
+            <div class="alert alert-danger mb-4">{{ error }}</div>
+            {% endif %}
 
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre Completo</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="nombre" class="form-label small fw-bold text-secondary">Nombre Completo</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class='bx bx-user'></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0" id="nombre" name="nombre" required>
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
+                <div class="mb-3">
+                    <label for="email" class="form-label small fw-bold text-secondary">Email</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class='bx bx-envelope'></i></span>
+                         <input type="email" class="form-control border-start-0 ps-0" id="email" name="email" required>
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                <div class="mb-3">
+                    <label for="password" class="form-label small fw-bold text-secondary">Contraseña</label>
+                     <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class='bx bx-lock-alt'></i></span>
+                        <input type="password" class="form-control border-start-0 ps-0" id="password" name="password" required>
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="rol" class="form-label">Rol</label>
-                        <select class="form-select" id="rol" name="rol" required>
-                            <option value="VENDEDOR">Vendedor</option>
-                            <option value="ADMIN">Administrador</option>
-                        </select>
-                    </div>
+                <div class="mb-3">
+                    <label for="rol" class="form-label small fw-bold text-secondary">Rol</label>
+                    <select class="form-select" id="rol" name="rol" required>
+                        <option value="VENDEDOR">Vendedor</option>
+                        <option value="ADMIN">Administrador</option>
+                    </select>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="sucursal" class="form-label">Sucursal Asignada</label>
-                        <select class="form-select" id="sucursal" name="id_sucursal" required>
-                            <option value="" selected disabled>Seleccione una sucursal</option>
-                            {% for suc in sucursales %}
-                                <option value="{{ suc.id_sucursal }}">{{ suc.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                <div class="mb-3">
+                    <label for="sucursal" class="form-label small fw-bold text-secondary">Sucursal Asignada</label>
+                    <select class="form-select" id="sucursal" name="id_sucursal" required>
+                        <option value="" selected disabled>Seleccione una sucursal</option>
+                        {% for suc in sucursales %}
+                            <option value="{{ suc.id_sucursal }}">{{ suc.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">Crear Usuario</button>
-                        <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                    <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_usuarios' %}'">Cancelar</fluent-button>
+                    <fluent-button appearance="accent" type="submit">
+                        <i class='bx bx-save me-2'></i> Crear Usuario
+                    </fluent-button>
+                </div>
+            </form>
+        </fluent-card>
     </div>
 </div>
 {% endblock %}

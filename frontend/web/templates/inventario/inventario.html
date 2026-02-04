@@ -11,102 +11,98 @@
 </div>
 
 <!-- Filtros y Búsqueda -->
-<div class="card shadow-sm border-0 rounded-4 mb-4">
-    <div class="card-body p-4 bg-white rounded-4">
-        <form method="GET" class="row g-3 align-items-end">
-            <!-- Filtro Sucursal -->
-            <div class="col-md-4">
-                <label for="sucursal_id" class="form-label fw-bold text-secondary text-uppercase small">Filtrar por Sucursal</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-shop text-primary"></i></span>
-                    <select class="form-select border-start-0 ps-0 bg-light" id="sucursal_id" name="sucursal_id" onchange="this.form.submit()">
-                        <option value="" {% if not sucursal_seleccionada %}selected{% endif %} disabled>-- Selecciona Sucursal --</option>
-                        {% for suc in sucursales %}
-                            <option value="{{ suc.id_sucursal }}" {% if sucursal_seleccionada == suc.id_sucursal %}selected{% endif %}>
-                                {{ suc.nombre }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+<fluent-card class="mb-4 p-4">
+    <form method="GET" class="row g-3 align-items-end">
+        <!-- Filtro Sucursal -->
+        <div class="col-md-4">
+            <label for="sucursal_id" class="form-label fw-bold text-secondary text-uppercase small">Filtrar por Sucursal</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class='bx bx-store text-primary'></i></span>
+                <select class="form-select border-start-0 ps-0 bg-light" id="sucursal_id" name="sucursal_id" onchange="this.form.submit()">
+                    <option value="" {% if not sucursal_seleccionada %}selected{% endif %} disabled>-- Selecciona Sucursal --</option>
+                    {% for suc in sucursales %}
+                        <option value="{{ suc.id_sucursal }}" {% if sucursal_seleccionada == suc.id_sucursal %}selected{% endif %}>
+                            {{ suc.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
-             <!-- Buscador -->
-             <div class="col-md-6">
-                <label for="q" class="form-label fw-bold text-secondary text-uppercase small">Buscar Producto</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-primary"></i></span>
-                    <input type="text" class="form-control border-start-0 ps-0 bg-light" id="q" name="q" value="{{ busqueda }}" placeholder="Nombre o código de barras...">
-                    {% if busqueda %}
-                        <a href="{% url 'lista_inventario' %}{% if sucursal_seleccionada %}?sucursal_id={{ sucursal_seleccionada }}{% endif %}" class="btn btn-outline-secondary" title="Limpiar"><i class="bi bi-x-lg"></i></a>
-                    {% endif %}
-                </div>
+        </div>
+         <!-- Buscador -->
+         <div class="col-md-6">
+            <label for="q" class="form-label fw-bold text-secondary text-uppercase small">Buscar Producto</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class='bx bx-search text-primary'></i></span>
+                <input type="text" class="form-control border-start-0 ps-0 bg-light" id="q" name="q" value="{{ busqueda }}" placeholder="Nombre o código de barras...">
+                {% if busqueda %}
+                    <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_inventario' %}{% if sucursal_seleccionada %}?sucursal_id={{ sucursal_seleccionada }}{% endif %}'" title="Limpiar"><i class='bx bx-x'></i></fluent-button>
+                {% endif %}
             </div>
-            <div class="col-md-2 text-end">
-                 <!-- Espacio para futuro -->
-            </div>
-        </form>
-    </div>
-</div>
+        </div>
+        <div class="col-md-2 text-end">
+             <!-- Espacio para futuro -->
+        </div>
+    </form>
+</fluent-card>
 
 {% if error %}
     <div class="alert alert-danger shadow-sm rounded-3 mb-4 border-0 border-start border-4 border-danger">
         <div class="d-flex align-items-center">
-            <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+            <i class='bx bx-error-circle fs-4 me-3'></i>
             <div>{{ error }}</div>
         </div>
     </div>
 {% endif %}
 
 <!-- Tabla de Inventario -->
-<div class="card shadow border-0 rounded-4 overflow-hidden">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light text-secondary text-uppercase small fw-bold">
-                    <tr>
-                        <th class="px-4 py-3">ID Producto</th>
-                        <th class="py-3">Producto</th>
-                        <th class="py-3">Código Barras</th>
-                        <th class="py-3 text-center">Stock Total</th>
-                        <th class="py-3 text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="inventarioBody">
-                    {% for item in inventario %}
-                    <tr>
-                        <td><span class="badge bg-secondary text-light">{{ item.id_producto }}</span></td>
-                        <td class="fw-bold">{{ item.nombre }}</td>
-                        <td>
-                            {% if item.codigo_barras %}
-                                <span class="font-monospace text-muted"><i class="bi bi-upc"></i> {{ item.codigo_barras }}</span>
-                            {% else %}
-                                <span class="text-muted small">-</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-primary fs-6">{{ item.total_cantidad }}</span>
-                        </td>
-                        <td class="text-center">
-                            <a href="{% url 'detalle_inventario' item.id_producto %}{% if sucursal_seleccionada %}?sucursal_id={{ sucursal_seleccionada }}{% endif %}" class="btn btn-info btn-sm px-3 text-white fw-bold">
-                                <i class="bi bi-eye-fill me-1"></i> Ver Detalles
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
-                            <div class="mb-3">
-                                <i class="bi bi-box-seam fs-1 text-secondary opacity-50"></i>
-                            </div>
-                            <h5 class="fw-normal">No hay stock registrado</h5>
-                            <p class="small mb-0">Prueba ajustando los filtros o asigna stock desde el listado de productos.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<fluent-card class="p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-secondary text-uppercase small fw-bold">
+                <tr>
+                    <th class="px-4 py-3">ID Producto</th>
+                    <th class="py-3">Producto</th>
+                    <th class="py-3">Código Barras</th>
+                    <th class="py-3 text-center">Stock Total</th>
+                    <th class="py-3 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="inventarioBody">
+                {% for item in inventario %}
+                <tr>
+                    <td><span class="badge bg-secondary text-light">{{ item.id_producto }}</span></td>
+                    <td class="fw-bold">{{ item.nombre }}</td>
+                    <td>
+                        {% if item.codigo_barras %}
+                            <span class="font-monospace text-muted"><i class='bx bx-barcode'></i> {{ item.codigo_barras }}</span>
+                        {% else %}
+                            <span class="text-muted small">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-primary fs-6">{{ item.total_cantidad }}</span>
+                    </td>
+                    <td class="text-center">
+                        <fluent-button onclick="window.location.href='{% url 'detalle_inventario' item.id_producto %}{% if sucursal_seleccionada %}?sucursal_id={{ sucursal_seleccionada }}{% endif %}'">
+                            <i class='bx bx-show me-1'></i> Ver Detalles
+                        </fluent-button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-5 text-muted">
+                        <div class="mb-3">
+                            <i class='bx bx-box fs-1 text-secondary opacity-50'></i>
+                        </div>
+                        <h5 class="fw-normal">No hay stock registrado</h5>
+                        <p class="small mb-0">Prueba ajustando los filtros o asigna stock desde el listado de productos.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
+</fluent-card>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

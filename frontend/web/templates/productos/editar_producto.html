@@ -8,16 +8,16 @@
         
         <div class="mb-4">
             <a href="{% url 'lista_productos' %}" class="text-decoration-none text-muted mb-2 d-inline-block">
-                <i class="bi bi-arrow-left me-1"></i>Volver al listado
+                <i class='bx bx-arrow-back me-1'></i>Volver al listado
             </a>
             <h2 class="fw-bold">Editar Producto</h2>
         </div>
 
-        <div class="card shadow border-0">
-            <div class="card-body p-4">
+        <fluent-card class="p-4">
+            
                 {% if error %}
                     <div class="alert alert-danger d-flex align-items-center mb-4">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <i class='bx bxs-error-circle me-2'></i>
                         <div>{{ error }}</div>
                     </div>
                 {% endif %}
@@ -28,18 +28,18 @@
                     <h6 class="text-uppercase text-muted fw-bold small mb-3 border-bottom pb-2">Información Básica</h6>
                     <div class="row mb-4">
                         <div class="col-md-8">
-                            <label for="nombre" class="form-label">Nombre del Producto <span class="text-danger">*</span></label>
+                            <label for="nombre" class="form-label small fw-bold text-secondary">Nombre del Producto <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="nombre" name="nombre" value="{{ producto.nombre }}" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="codigo_barras" class="form-label">Código de Barras</label>
+                            <label for="codigo_barras" class="form-label small fw-bold text-secondary">Código de Barras</label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white"><i class="bi bi-upc-scan"></i></span>
-                                <input type="text" class="form-control" id="codigo_barras" name="codigo_barras" value="{{ producto.codigo_barras|default_if_none:'' }}">
+                                <span class="input-group-text bg-white border-end-0"><i class='bx bx-barcode'></i></span>
+                                <input type="text" class="form-control border-start-0 ps-0" id="codigo_barras" name="codigo_barras" value="{{ producto.codigo_barras|default_if_none:'' }}">
                             </div>
                         </div>
                         <div class="col-12 mt-3">
-                            <label for="descripcion" class="form-label">Descripción Detallada</label>
+                            <label for="descripcion" class="form-label small fw-bold text-secondary">Descripción Detallada</label>
                             <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ producto.descripcion|default_if_none:'' }}</textarea>
                         </div>
                     </div>
@@ -47,24 +47,24 @@
                     <h6 class="text-uppercase text-muted fw-bold small mb-3 border-bottom pb-2 mt-5">Precios e Inventario</h6>
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <label for="precio_venta" class="form-label">Precio de Venta <span class="text-danger">*</span></label>
+                            <label for="precio_venta" class="form-label small fw-bold text-secondary">Precio de Venta <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" step="0.01" class="form-control fw-bold text-success" id="precio_venta" name="precio_venta" value="{{ producto.precio_venta }}" required>
+                                <span class="input-group-text bg-white border-end-0">$</span>
+                                <input type="number" step="0.01" class="form-control border-start-0 ps-0 fw-bold text-success" id="precio_venta" name="precio_venta" value="{{ producto.precio_venta }}" required>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="costo_neto" class="form-label">Costo Neto <span class="text-danger">*</span></label>
+                            <label for="costo_neto" class="form-label small fw-bold text-secondary">Costo Neto <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" step="0.01" class="form-control" id="costo_neto" name="costo_neto" value="{{ producto.costo_neto }}" required>
+                                <span class="input-group-text bg-white border-end-0">$</span>
+                                <input type="number" step="0.01" class="form-control border-start-0 ps-0" id="costo_neto" name="costo_neto" value="{{ producto.costo_neto }}" required>
                             </div>
                         </div>
                     </div>
 
                     <div class="row mb-4">
                         <div class="col-md-4">
-                            <label for="unidad_medida" class="form-label">Unidad de Medida <span class="text-danger">*</span></label>
+                            <label for="unidad_medida" class="form-label small fw-bold text-secondary">Unidad de Medida <span class="text-danger">*</span></label>
                             <select class="form-select" id="unidad_medida" name="unidad_medida">
                                 <option value="UNID" {% if producto.unidad_medida == 'UNID' %}selected{% endif %}>Unidad</option>
                                 <option value="KG" {% if producto.unidad_medida == 'KG' %}selected{% endif %}>Kilogramo</option>
@@ -72,7 +72,7 @@
                             </select>
                         </div>
                         <div class="col-md-8">
-                            <label for="id_categoria" class="form-label">Categoría</label>
+                            <label for="id_categoria" class="form-label small fw-bold text-secondary">Categoría</label>
                             <select class="form-select" id="id_categoria" name="id_categoria">
                                 <option value="">Seleccione una categoría para organizar</option>
                                 {% for cat in categorias %}
@@ -84,15 +84,14 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-5">
-                        <a href="{% url 'lista_productos' %}" class="btn btn-light px-4">Cancelar</a>
-                        <button type="submit" class="btn btn-success px-4 fw-bold">
-                            <i class="bi bi-save me-2"></i> Guardar Cambios
-                        </button>
+                    <div class="d-flex justify-content-end gap-3 pt-3 border-top mt-5">
+                        <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_productos' %}'">Cancelar</fluent-button>
+                        <fluent-button appearance="accent" type="submit">
+                            <i class='bx bx-save me-2'></i> Guardar Cambios
+                        </fluent-button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </fluent-card>
     </div>
 </div>
 {% endblock %}

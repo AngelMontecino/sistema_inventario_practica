@@ -5,9 +5,9 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="fw-bold">Gestión de Sucursales</h1>
-    <a href="{% url 'crear_sucursal' %}" class="btn btn-primary shadow-sm">
-        <i class="bi bi-shop me-2"></i>Nueva Sucursal
-    </a>
+    <fluent-button appearance="accent" onclick="window.location.href='{% url 'crear_sucursal' %}'">
+        <i class='bx bx-store me-2'></i>Nueva Sucursal
+    </fluent-button>
 </div>
 
 {% if error %}
@@ -19,33 +19,32 @@
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
     {% for suc in sucursales %}
     <div class="col">
-        <div class="card h-100 shadow border-0 position-relative bg-white rounded-4 overflow-hidden">
+        <fluent-card class="h-100 position-relative p-4">
             {% if suc.es_principal %}
-                <div class="position-absolute top-0 end-0 bg-warning text-dark px-3 py-1 rounded-bl fw-bold shadow-sm" style="border-bottom-left-radius: 10px;">
-                    <i class="bi bi-star-fill me-1"></i> Principal
+                <div class="position-absolute top-0 end-0 bg-warning text-dark px-3 py-1 fw-bold shadow-sm" style="border-bottom-left-radius: 8px;">
+                    <i class='bx bxs-star me-1'></i> Principal
                 </div>
             {% endif %}
             
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="bg-light p-3 rounded-circle me-3">
-                        <i class="bi bi-shop fs-3 text-primary"></i>
-                    </div>
-                    <h4 class="card-title fw-bold mb-0 text-dark">{{ suc.nombre }}</h4>
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-light p-3 rounded-circle me-3">
+                    <i class='bx bx-store fs-3 text-primary'></i>
                 </div>
-                
-                <div class="text-muted">
-                    <p class="mb-2"><i class="bi bi-geo-alt me-2 text-danger"></i> {{ suc.direccion|default:'Sin dirección' }}</p>
-                    <p class="mb-0"><i class="bi bi-telephone me-2 text-success"></i> {{ suc.telefono|default:'Sin teléfono' }}</p>
-                </div>
+                <h4 class="fw-bold mb-0 text-dark">{{ suc.nombre }}</h4>
             </div>
-            <div class="card-footer bg-white border-top-0 p-3 pt-0 d-flex justify-content-between align-items-center">
+            
+            <div class="text-muted mb-4">
+                <p class="mb-2"><i class='bx bx-map me-2 text-danger'></i> {{ suc.direccion|default:'Sin dirección' }}</p>
+                <p class="mb-0"><i class='bx bx-phone me-2 text-success'></i> {{ suc.telefono|default:'Sin teléfono' }}</p>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center border-top pt-3">
                 <small class="text-secondary fw-bold">ID: {{ suc.id_sucursal }}</small>
-                <a href="{% url 'editar_sucursal' suc.id_sucursal %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                    <i class="bi bi-pencil-fill me-1"></i> Editar
-                </a>
+                <fluent-button appearance="outline" onclick="window.location.href='{% url 'editar_sucursal' suc.id_sucursal %}'">
+                    <i class='bx bx-edit-alt me-1'></i> Editar
+                </fluent-button>
             </div>
-        </div>
+        </fluent-card>
     </div>
     {% empty %}
     <div class="col-12">

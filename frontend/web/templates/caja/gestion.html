@@ -17,47 +17,49 @@
 <div class="row">
     <!-- Panel de Estado -->
     <div class="col-md-6 mb-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h5 class="my-0 fw-normal">Estado de Caja</h5>
+        <fluent-card class="h-100 p-4">
+            <div class="border-bottom pb-3 mb-3">
+                <h5 class="fw-bold text-primary">Estado de Caja</h5>
             </div>
-            <div class="card-body">
+            <div>
                 {% if resumen and resumen.estado == 'ABIERTA' %}
-                    <h2 class="card-title pricing-card-title text-success">ABIERTA</h2>
-                    <ul class="list-unstyled mt-3 mb-4">
-                        <li><strong>Saldo Inicial:</strong> ${{ resumen.saldo_inicial|intcomma }}</li>
-                        <li><strong>Ventas (Ingresos):</strong> ${{ resumen.ingresos_ventas|intcomma }}</li>
-                        <li><strong>Compras (Egresos):</strong> ${{ resumen.egresos_compras|intcomma }}</li>
-                        <li><strong>Otros Ingresos:</strong> ${{ resumen.ingresos_extra|intcomma }}</li>
-                        <li><strong>Otros Egresos:</strong> ${{ resumen.egresos_extra|intcomma }}</li>
-                        <li class="border-top pt-2 mt-2"><strong>Saldo Teórico Actual:</strong> ${{ resumen.saldo_teorico|intcomma }}</li>
+                    <h2 class="text-success fw-bold mb-3"><i class='bx bxs-lock-open-alt'></i> ABIERTA</h2>
+                    <ul class="list-unstyled mb-4 text-muted">
+                        <li class="mb-2"><strong class="text-dark">Saldo Inicial:</strong> ${{ resumen.saldo_inicial|intcomma }}</li>
+                        <li class="mb-2"><strong class="text-dark">Ventas (Ingresos):</strong> ${{ resumen.ingresos_ventas|intcomma }}</li>
+                        <li class="mb-2"><strong class="text-dark">Compras (Egresos):</strong> ${{ resumen.egresos_compras|intcomma }}</li>
+                        <li class="mb-2"><strong class="text-dark">Otros Ingresos:</strong> ${{ resumen.ingresos_extra|intcomma }}</li>
+                        <li class="mb-2"><strong class="text-dark">Otros Egresos:</strong> ${{ resumen.egresos_extra|intcomma }}</li>
+                        <li class="border-top pt-2 mt-2 h5 text-dark"><strong>Saldo Teórico Actual:</strong> ${{ resumen.saldo_teorico|intcomma }}</li>
                     </ul>
-                    <a href="{% url 'cerrar_caja' %}" class="w-100 btn btn-lg btn-danger">Cerrar Caja</a>
+                    <fluent-button appearance="accent" class="w-100" style="--accent-fill-rest: #dc3545;" onclick="window.location.href='{% url 'cerrar_caja' %}'">Cerrar Caja</fluent-button>
                 {% else %}
-                    <h2 class="card-title pricing-card-title text-secondary">CERRADA / SIN MOVIMIENTOS</h2>
-                    <p class="text-muted">Debe abrir la caja para realizar ventas.</p>
-                    <a href="{% url 'abrir_caja' %}" class="w-100 btn btn-lg btn-success">Abrir Caja</a>
+                    <h2 class="text-secondary fw-bold mb-3"><i class='bx bxs-lock-alt'></i> CERRADA</h2>
+                    <p class="text-muted mb-4">Debe abrir la caja para realizar ventas.</p>
+                    <fluent-button appearance="accent" class="w-100" style="--accent-fill-rest: #198754;" onclick="window.location.href='{% url 'abrir_caja' %}'">Abrir Caja</fluent-button>
                 {% endif %}
             </div>
-        </div>
+        </fluent-card>
     </div>
 
     <!-- Accesos Rápidos -->
     <div class="col-md-6 mb-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="my-0 fw-normal">Acciones</h5>
+        <fluent-card class="h-100 p-4">
+            <div class="border-bottom pb-3 mb-3">
+                <h5 class="fw-bold text-secondary">Acciones</h5>
             </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{% url 'crear_documento' %}" class="btn btn-primary btn-lg">
-                        <i class="bi bi-cart-plus"></i> Nueva Venta 
-                    </a>
-                    <a href="{% url 'registrar_movimiento_caja' %}" class="btn btn-outline-secondary">Registrar Movimiento Extra</a>
-                    <a href="{% url 'ver_reportes_caja' %}" class="btn btn-outline-info">Ver Reportes Históricos</a>
-                </div>
+            <div class="d-grid gap-3">
+                <fluent-button appearance="accent" class="w-100 mb-2" onclick="window.location.href='{% url 'crear_documento' %}'">
+                    <i class='bx bx-cart-add me-2'></i> Nueva Venta
+                </fluent-button>
+                <fluent-button onclick="window.location.href='{% url 'registrar_movimiento_caja' %}'">
+                    Registrar Movimiento Extra
+                </fluent-button>
+                <fluent-button onclick="window.location.href='{% url 'ver_reportes_caja' %}'">
+                    Ver Reportes Históricos
+                </fluent-button>
             </div>
-        </div>
+        </fluent-card>
     </div>
 </div>
 {% endblock %}

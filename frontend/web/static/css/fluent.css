@@ -1,0 +1,167 @@
+:root {
+    /* Colores */
+    --fluent-bg: #f3f3f3;
+    /* Aproximación Mica Alt */
+    --fluent-surface: #ffffff;
+    --fluent-accent: #0078d4;
+    /* Azul Windows */
+    --fluent-accent-hover: #106ebe;
+    --fluent-text-primary: #202020;
+    --fluent-text-secondary: #606060;
+    --fluent-border: #e0e0e0;
+    /* Borde sólido */
+    --fluent-border-input: #d1d1d1;
+
+    /* Métricas */
+    --fluent-radius: 6px;
+    --fluent-radius-lg: 8px;
+    --fluent-depth-4: 0 1.6px 3.6px 0 rgba(0, 0, 0, 0.132), 0 0.3px 0.9px 0 rgba(0, 0, 0, 0.108);
+    --fluent-depth-8: 0 3.2px 7.2px 0 rgba(0, 0, 0, 0.132), 0 0.6px 1.8px 0 rgba(0, 0, 0, 0.108);
+    --fluent-depth-16: 0 6.4px 14.4px 0 rgba(0, 0, 0, 0.132), 0 1.2px 3.6px 0 rgba(0, 0, 0, 0.108);
+
+    /* Transiciones */
+    --fluent-anim: all 0.2s cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+body {
+    background-color: var(--fluent-bg);
+    font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--fluent-text-primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Barra de Navegación */
+.navbar {
+    background-color: #ffffff !important;
+    opacity: 1 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    z-index: 10000;
+    position: sticky;
+    top: 0;
+}
+
+/* Arreglar alineación si es necesario */
+.sticky-top {
+    z-index: 10000;
+}
+
+.navbar-brand {
+    color: var(--fluent-text-primary) !important;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.nav-link {
+    color: var(--fluent-text-secondary) !important;
+    font-weight: 500;
+    border-radius: var(--fluent-radius);
+    padding: 0.5rem 1rem !important;
+    transition: var(--fluent-anim);
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background-color: rgba(0, 0, 0, 0.04);
+    color: var(--fluent-text-primary) !important;
+}
+
+.nav-link.active {
+    font-weight: 600 !important;
+    color: var(--fluent-accent) !important;
+    background-color: rgba(0, 0, 0, 0.03);
+    background-color: rgba(0, 0, 0, 0.03);
+
+}
+
+
+.nav-link.active::after {
+    display: none;
+}
+
+
+/* BOTONES */
+.btn {
+    border-radius: var(--fluent-radius);
+    font-weight: 500;
+    transition: var(--fluent-anim);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary,
+.bg-primary {
+    background-color: var(--fluent-accent) !important;
+    border-color: var(--fluent-accent) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--fluent-accent-hover) !important;
+    border-color: var(--fluent-accent-hover) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-outline-primary {
+    color: var(--fluent-accent);
+    border-color: var(--fluent-border-input);
+}
+
+.btn-outline-primary:hover {
+    background-color: rgba(0, 120, 212, 0.1);
+    color: var(--fluent-accent);
+    border-color: var(--fluent-accent);
+}
+
+/* INPUTS  */
+.form-control,
+.form-select {
+    border-radius: var(--fluent-radius);
+    border: 1px solid var(--fluent-border-input);
+    padding: 0.5rem 0.75rem;
+    box-shadow: none;
+    transition: var(--fluent-anim);
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--fluent-accent);
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+    border-bottom-width: 2px;
+
+}
+
+/* TABLAS */
+.table {
+    --bs-table-bg: transparent;
+}
+
+.table thead th {
+    font-weight: 600;
+    border-bottom: 1px solid var(--fluent-border);
+    color: var(--fluent-text-secondary);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    vertical-align: middle;
+    color: var(--fluent-text-primary);
+}
+
+/* UTILIDADES */
+.text-muted {
+    color: var(--fluent-text-secondary) !important;
+}
+
+/* AJUSTE DE ÍCONOS  */
+i.bx {
+    vertical-align: middle;
+    font-size: 1.2em;
+}
+
+/* ALERTAS */
+.alert {
+    border-radius: var(--fluent-radius);
+    border: none;
+    box-shadow: var(--fluent-depth-4);
+}

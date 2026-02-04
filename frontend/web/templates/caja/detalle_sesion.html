@@ -5,11 +5,11 @@
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Detalle de Caja #{{ detalle.id_apertura }}</h1>
+    <h1 class="h2 fw-bold text-primary"><i class='bx bx-detail me-2'></i>Detalle de Caja #{{ detalle.id_apertura }}</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
-        <a href="{% url 'ver_reportes_caja' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Volver a Reportes
-        </a>
+        <fluent-button appearance="outline" onclick="window.location.href='{% url 'ver_reportes_caja' %}'">
+            <i class='bx bx-arrow-back me-1'></i> Volver a Reportes
+        </fluent-button>
     </div>
 </div>
 
@@ -23,42 +23,46 @@
 <!-- Resumen Cards -->
 <div class="row mb-4">
     <div class="col-md-3">
-        <div class="card text-white bg-primary mb-3">
-            <div class="card-header">Saldo Inicial</div>
-            <div class="card-body">
-                <h4 class="card-title">${{ detalle.saldo_inicial|intcomma }}</h4>
-                <p class="card-text small">{{ detalle.fecha_apertura|date:"d/m/Y H:i" }} por {{ detalle.usuario_apertura }}</p>
+        <fluent-card class="h-100 p-3 bg-primary text-white border-0">
+            <div class="d-flex align-items-center mb-2">
+                <i class='bx bx-wallet fs-4 me-2'></i>
+                <h6 class="mb-0 opacity-75">Saldo Inicial</h6>
             </div>
-        </div>
+            <h3 class="mb-1">${{ detalle.saldo_inicial|intcomma }}</h3>
+            <small class="opacity-75" style="font-size: 0.75rem;">{{ detalle.fecha_apertura|date:"d/m/Y H:i" }} por {{ detalle.usuario_apertura }}</small>
+        </fluent-card>
     </div>
     <div class="col-md-3">
-        <div class="card text-dark bg-light mb-3 border-secondary">
-            <div class="card-header">Ventas (Ingresos)</div>
-            <div class="card-body">
-                <h4 class="card-title text-success">+ ${{ detalle.ingresos_ventas|intcomma }}</h4>
+        <fluent-card class="h-100 p-3">
+            <div class="d-flex align-items-center mb-2 text-success">
+                <i class='bx bx-trending-up fs-4 me-2'></i>
+                <h6 class="mb-0">Ventas (Ingresos)</h6>
             </div>
-        </div>
+            <h3 class="mb-0 text-success fw-bold">+ ${{ detalle.ingresos_ventas|intcomma }}</h3>
+        </fluent-card>
     </div>
     <div class="col-md-3">
-        <div class="card text-dark bg-light mb-3 border-secondary">
-            <div class="card-header">Compras/Gastos (Egresos)</div>
-            <div class="card-body">
-                <h4 class="card-title text-danger">- ${{ detalle.total_egresos|intcomma }}</h4>
+        <fluent-card class="h-100 p-3">
+             <div class="d-flex align-items-center mb-2 text-danger">
+                <i class='bx bx-trending-down fs-4 me-2'></i>
+                <h6 class="mb-0">Gastos (Egresos)</h6>
             </div>
-        </div>
+            <h3 class="mb-0 text-danger fw-bold">- ${{ detalle.total_egresos|intcomma }}</h3>
+        </fluent-card>
     </div>
     <div class="col-md-3">
-        <div class="card {% if detalle.estado == 'ABIERTA' %}bg-success{% else %}bg-secondary{% endif %} text-white mb-3">
-            <div class="card-header">Saldo Final {% if detalle.estado == 'ABIERTA' %}(Actual){% endif %}</div>
-            <div class="card-body">
-                <h4 class="card-title">${{ detalle.saldo_teorico|intcomma }}</h4>
-                {% if detalle.estado == 'CERRADA' %}
-                    <p class="card-text small">Cierre: {{ detalle.fecha_cierre|date:"d/m/Y H:i" }} (Dif: ${{ detalle.diferencia|intcomma }})</p>
-                {% else %}
-                    <p class="card-text small">EN CURSO</p>
-                {% endif %}
+        <fluent-card class="h-100 p-3 {% if detalle.estado == 'ABIERTA' %}bg-success{% else %}bg-secondary{% endif %} text-white border-0">
+            <div class="d-flex align-items-center mb-2">
+                <i class='bx {% if detalle.estado == "ABIERTA" %}bxs-lock-open-alt{% else %}bxs-lock-alt{% endif %} fs-4 me-2'></i>
+                <h6 class="mb-0 opacity-75">Saldo Final {% if detalle.estado == 'ABIERTA' %}(Actual){% endif %}</h6>
             </div>
-        </div>
+            <h3 class="mb-1">${{ detalle.saldo_teorico|intcomma }}</h3>
+            {% if detalle.estado == 'CERRADA' %}
+                <small class="opacity-75" style="font-size: 0.75rem;">Cierre: {{ detalle.fecha_cierre|date:"d/m/Y H:i" }} (Dif: ${{ detalle.diferencia|intcomma }})</small>
+            {% else %}
+                <small class="badge bg-white text-success fw-bold">EN CURSO</small>
+            {% endif %}
+        </fluent-card>
     </div>
 </div>
 

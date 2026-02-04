@@ -3,55 +3,59 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card shadow">
-            <div class="card-header bg-warning text-dark">
-                <h4 class="mb-0">Editar Usuario: {{ usuario.nombre }}</h4>
+        <fluent-card class="p-4">
+            <div class="border-bottom pb-3 mb-4">
+                <h4 class="mb-0 fw-bold text-primary"><i class='bx bx-edit-alt me-2'></i>Editar Usuario: {{ usuario.nombre }}</h4>
             </div>
-            <div class="card-body">
-                {% if error %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
+            
+            {% if error %}
+            <div class="alert alert-danger mb-4">{{ error }}</div>
+            {% endif %}
 
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="text" class="form-control" value="{{ usuario.email }}" disabled readonly>
-                        <div class="form-text">El email no se puede editar aquí.</div>
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-secondary">Email</label>
+                    <div class="input-group">
+                         <span class="input-group-text bg-light border-end-0"><i class='bx bx-envelope text-muted'></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0 bg-light" value="{{ usuario.email }}" disabled readonly>
                     </div>
+                    <div class="form-text mt-1"><i class='bx bx-info-circle'></i> El email no se puede editar aquí.</div>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="rol" class="form-label">Rol</label>
-                        <select class="form-select" id="rol" name="rol" required>
-                            <option value="VENDEDOR" {% if usuario.rol == 'VENDEDOR' %}selected{% endif %}>Vendedor</option>
-                            <option value="ADMIN" {% if usuario.rol == 'ADMIN' %}selected{% endif %}>Administrador</option>
-                        </select>
-                    </div>
+                <div class="mb-3">
+                    <label for="rol" class="form-label small fw-bold text-secondary">Rol</label>
+                    <select class="form-select" id="rol" name="rol" required>
+                        <option value="VENDEDOR" {% if usuario.rol == 'VENDEDOR' %}selected{% endif %}>Vendedor</option>
+                        <option value="ADMIN" {% if usuario.rol == 'ADMIN' %}selected{% endif %}>Administrador</option>
+                    </select>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="sucursal" class="form-label">Sucursal Asignada</label>
-                        <select class="form-select" id="sucursal" name="id_sucursal" required>
-                            {% for suc in sucursales %}
-                                <option value="{{ suc.id_sucursal }}" {% if suc.id_sucursal == usuario.id_sucursal %}selected{% endif %}>
-                                    {{ suc.nombre }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                <div class="mb-3">
+                    <label for="sucursal" class="form-label small fw-bold text-secondary">Sucursal Asignada</label>
+                    <select class="form-select" id="sucursal" name="id_sucursal" required>
+                        {% for suc in sucursales %}
+                            <option value="{{ suc.id_sucursal }}" {% if suc.id_sucursal == usuario.id_sucursal %}selected{% endif %}>
+                                {{ suc.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                    <div class="mb-3 form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="estado" name="estado" {% if usuario.estado %}checked{% endif %}>
-                        <label class="form-check-label" for="estado">Usuario Activo</label>
-                    </div>
+                <div class="mb-4 form-check form-switch custom-switch p-3 bg-light rounded d-flex align-items-center">
+                    <input class="form-check-input ms-0 me-3 mt-0" type="checkbox" id="estado" name="estado" {% if usuario.estado %}checked{% endif %} style="width: 3em; height: 1.5em;">
+                    <label class="form-check-label fw-bold mb-0" for="estado">Usuario Activo</label>
+                </div>
 
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-warning">Guardar Cambios</button>
-                        <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                    <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_usuarios' %}'">Cancelar</fluent-button>
+                    <fluent-button appearance="accent" type="submit">
+                        <i class='bx bx-save me-2'></i> Guardar Cambios
+                    </fluent-button>
+                </div>
+            </form>
+        </fluent-card>
     </div>
 </div>
 {% endblock %}

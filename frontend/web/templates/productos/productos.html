@@ -5,69 +5,67 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Listado de Productos</h1>
-    <div class="btn-group">
-        <a href="{% url 'crear_categoria' %}" class="btn btn-outline-primary">Nueva Categoría</a>
-        <a href="{% url 'crear_producto' %}" class="btn btn-primary">Nuevo Producto</a>
+    <div class="d-flex gap-2">
+        <fluent-button onclick="window.location.href='{% url 'crear_categoria' %}'">Nueva Categoría</fluent-button>
+        <fluent-button appearance="accent" onclick="window.location.href='{% url 'crear_producto' %}'">Nuevo Producto</fluent-button>
     </div>
 </div>
 
 <!-- Barra de Filtros Avanzada -->
-<div class="card shadow-sm mb-4 border-0">
-    <div class="card-body bg-light rounded">
-        <form method="GET" id="filterForm" class="row g-3">
-            <!-- Búsqueda General -->
-            <div class="col-md-4">
-                <label class="form-label small text-muted fw-bold">Buscar</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
-                    <input type="text" class="form-control border-start-0 ps-0" id="filterBusqueda" name="q" 
-                           placeholder="Nombre, Código o ID..." value="{{ busqueda|default_if_none:'' }}">
-                </div>
+<fluent-card class="mb-4 p-3">
+    <form method="GET" id="filterForm" class="row g-3">
+        <!-- Búsqueda General -->
+        <div class="col-md-4">
+            <label class="form-label small text-muted fw-bold">Buscar</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class='bx bx-search text-secondary'></i></span>
+                <input type="text" class="form-control border-start-0 ps-0" id="filterBusqueda" name="q" 
+                       placeholder="Nombre, Código o ID..." value="{{ busqueda|default_if_none:'' }}">
             </div>
+        </div>
 
-            <!-- Categoría -->
-            <div class="col-md-3">
-                <label class="form-label small text-muted fw-bold">Categoría</label>
-                <select class="form-select" id="filterCategoria" name="id_categoria">
-                    <option value="">Todas</option>
-                    {% for cat in categorias %}
-                        <option value="{{ cat.id_categoria }}" {% if id_categoria == cat.id_categoria %}selected{% endif %}>
-                            {{ cat.nombre }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
+        <!-- Categoría -->
+        <div class="col-md-3">
+            <label class="form-label small text-muted fw-bold">Categoría</label>
+            <select class="form-select" id="filterCategoria" name="id_categoria">
+                <option value="">Todas</option>
+                {% for cat in categorias %}
+                    <option value="{{ cat.id_categoria }}" {% if id_categoria == cat.id_categoria %}selected{% endif %}>
+                        {{ cat.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-            <!-- Unidad -->
-            <div class="col-md-2">
-                <label class="form-label small text-muted fw-bold">Unidad</label>
-                <select class="form-select" id="filterUnidad" name="unidad_medida">
-                    <option value="">Todas</option>
-                    <option value="UNID" {% if unidad_medida == 'UNID' %}selected{% endif %}>Unidad</option>
-                    <option value="KG" {% if unidad_medida == 'KG' %}selected{% endif %}>Kilogramo</option>
-                    <option value="LITRO" {% if unidad_medida == 'LITRO' %}selected{% endif %}>Litro</option>
-                </select>
-            </div>
+        <!-- Unidad -->
+        <div class="col-md-2">
+            <label class="form-label small text-muted fw-bold">Unidad</label>
+            <select class="form-select" id="filterUnidad" name="unidad_medida">
+                <option value="">Todas</option>
+                <option value="UNID" {% if unidad_medida == 'UNID' %}selected{% endif %}>Unidad</option>
+                <option value="KG" {% if unidad_medida == 'KG' %}selected{% endif %}>Kilogramo</option>
+                <option value="LITRO" {% if unidad_medida == 'LITRO' %}selected{% endif %}>Litro</option>
+            </select>
+        </div>
 
-            <!-- Precio Rango -->
-            <div class="col-md-3">
-                <label class="form-label small text-muted fw-bold">Precio Venta</label>
-                <div class="input-group">
-                    <input type="number" class="form-control" id="filterPrecioMin" name="precio_min" placeholder="Min" value="{{ precio_min|default_if_none:'' }}">
-                    <span class="input-group-text">-</span>
-                    <input type="number" class="form-control" id="filterPrecioMax" name="precio_max" placeholder="Max" value="{{ precio_max|default_if_none:'' }}">
-                </div>
+        <!-- Precio Rango -->
+        <div class="col-md-3">
+            <label class="form-label small text-muted fw-bold">Precio Venta</label>
+            <div class="input-group">
+                <input type="number" class="form-control" id="filterPrecioMin" name="precio_min" placeholder="Min" value="{{ precio_min|default_if_none:'' }}">
+                <span class="input-group-text">-</span>
+                <input type="number" class="form-control" id="filterPrecioMax" name="precio_max" placeholder="Max" value="{{ precio_max|default_if_none:'' }}">
             </div>
-            
-            <!-- Botón Limpiar (Solo visible si hay filtros activos - manejado por JS o lógica simple) -->
-            <div class="col-12 text-end">
-                <a href="{% url 'lista_productos' %}" class="btn btn-link text-decoration-none btn-sm text-secondary">
-                    <i class="bi bi-eraser"></i> Limpiar Filtros
-                </a>
-            </div>
-        </form>
-    </div>
-</div>
+        </div>
+        
+        <!-- Botón Limpiar -->
+        <div class="col-12 text-end">
+            <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_productos' %}'">
+                 <i class='bx bx-eraser'></i> Limpiar Filtros
+            </fluent-button>
+        </div>
+    </form>
+</fluent-card>
 
 {% if error %}
 <div class="alert alert-danger">{{ error }}</div>
@@ -75,15 +73,15 @@
 
 <div class="table-responsive">
     <table class="table table-striped table-hover align-middle">
-        <thead class="table-dark">
+        <thead class="bg-light text-secondary text-uppercase small fw-bold">
             <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Código Barras</th>
-                <th>Precio Venta</th>
-                <th>Unidad</th>
-                <th>Categoría</th>
-                <th class="text-center">Acciones</th>
+                <th class="px-3 py-2">ID</th>
+                <th class="px-3 py-2">Nombre</th>
+                <th class="px-3 py-2">Código Barras</th>
+                <th class="px-3 py-2">Precio Venta</th>
+                <th class="px-3 py-2">Unidad</th>
+                <th class="px-3 py-2">Categoría</th>
+                <th class="text-center px-3 py-2">Acciones</th>
             </tr>
         </thead>
         <tbody id="productosBody">
@@ -93,7 +91,7 @@
                 <td class="fw-bold">{{ p.nombre }}</td>
                 <td>
                     {% if p.codigo_barras %}
-                        <span class="font-monospace text-muted"><i class="bi bi-upc"></i> {{ p.codigo_barras }}</span>
+                        <span class="font-monospace text-muted"><i class='bx bx-barcode'></i> {{ p.codigo_barras }}</span>
                     {% else %}
                         <span class="text-muted small">-</span>
                     {% endif %}
@@ -109,19 +107,19 @@
                 </td>
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-2">
-                        <a href="{% url 'editar_producto' p.id_producto %}" class="btn btn-primary btn-sm px-3 fw-bold" title="Editar">
-                            <i class="bi bi-pencil-square me-1"></i> Editar
-                        </a>
-                        <a href="{% url 'asignar_inventario' p.id_producto %}" class="btn btn-success btn-sm px-3 fw-bold" title="Asignar Stock">
-                            <i class="bi bi-box-seam-fill me-1"></i> Stock
-                        </a>
+                        <fluent-button appearance="accent" onclick="window.location.href='{% url 'editar_producto' p.id_producto %}'">
+                            <i class='bx bx-edit me-1'></i> Editar
+                        </fluent-button>
+                        <fluent-button onclick="window.location.href='{% url 'asignar_inventario' p.id_producto %}'">
+                            <i class='bx bx-package me-1'></i> Stock
+                        </fluent-button>
                     </div>
                 </td>
             </tr>
             {% empty %}
             <tr>
                 <td colspan="7" class="text-center py-4 text-muted">
-                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    <i class='bx bx-box fs-1 d-block mb-2 opacity-25'></i>
                     No se encontraron productos con estos filtros.
                 </td>
             </tr>

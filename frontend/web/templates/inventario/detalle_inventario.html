@@ -5,9 +5,9 @@
 {% block content %}
 <div class="row align-items-center mb-4">
     <div class="col-md-8">
-        <a href="{% url 'lista_inventario' %}" class="text-decoration-none text-muted mb-2 d-inline-block">
-            <i class="bi bi-arrow-left me-1"></i>Volver al Inventario Global
-        </a>
+        <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_inventario' %}'">
+            <i class='bx bx-arrow-back me-1'></i> Volver al Inventario Global
+        </fluent-button>
         <h1 class="h3 fw-bold mb-0 text-gray-800">
              {{ producto.nombre }}
             {% if producto.codigo_barras %}
@@ -31,68 +31,67 @@
 {% endif %}
 
 <!-- Tabla de Detalles -->
-<div class="card shadow border-0 rounded-4 overflow-hidden">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light text-secondary text-uppercase small fw-bold">
-                    <tr>
-                        <th class="px-4 py-3">ID Inv.</th>
-                        <th class="py-3">Sucursal</th>
-                        <th class="py-3">Ubicación física</th>
-                        <th class="py-3 text-center">Cantidad</th>
-                        <th class="py-3 text-center">Alertas</th>
-                        <th class="py-3 text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="border-top-0">
-                    {% for item in detalles %}
-                    <tr>
-                        <td class="px-4 fw-bold text-muted">#{{ item.id_inventario }}</td>
-                        <td>
-                            <span class="badge bg-white text-dark border rounded-pill fw-normal px-3 py-2 shadow-sm">
-                                <i class="bi bi-shop me-1 text-primary"></i> ID: {{ item.id_sucursal }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if item.ubicacion_especifica %}
-                                <span class="d-block text-dark fw-medium"><i class="bi bi-geo-alt-fill me-1 text-secondary"></i> {{ item.ubicacion_especifica }}</span>
-                            {% else %}
-                                <span class="text-muted fst-italic ms-2 small">-- Sin ubicar --</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            <span class="fs-5 fw-bold {% if item.cantidad <= item.stock_minimo %}text-danger{% else %}text-success{% endif %}">
-                                {{ item.cantidad }}
-                            </span>
-                        </td>
-                        <td class="text-center">
-                             {% if item.cantidad <= item.stock_minimo %}
-                                <span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1 rounded-2">Bajo Stock (Min: {{ item.stock_minimo }})</span>
-                            {% else %}
-                                <span class="badge bg-success bg-opacity-10 text-success px-2 py-1 rounded-2">OK</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            <a href="{% url 'editar_inventario' item.id_inventario %}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold">
-                                <i class="bi bi-pencil-square me-1"></i> Editar
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center py-5">
-                            <div class="d-flex flex-column align-items-center justify-content-center text-muted">
-                                <i class="bi bi-box-seam display-1 mb-3 opacity-25"></i>
-                                <h5 class="fw-bold">No hay stock registrado</h5>
-                                <p class="mb-0">Este producto no tiene existencias registradas en esta selección.</p>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<!-- Tabla de Detalles -->
+<fluent-card class="p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-secondary text-uppercase small fw-bold">
+                <tr>
+                    <th class="px-4 py-3">ID Inv.</th>
+                    <th class="py-3">Sucursal</th>
+                    <th class="py-3">Ubicación física</th>
+                    <th class="py-3 text-center">Cantidad</th>
+                    <th class="py-3 text-center">Alertas</th>
+                    <th class="py-3 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="border-top-0">
+                {% for item in detalles %}
+                <tr>
+                    <td class="px-4 fw-bold text-muted">#{{ item.id_inventario }}</td>
+                    <td>
+                        <span class="badge bg-white text-dark border rounded-pill fw-normal px-3 py-2 shadow-sm">
+                            <i class='bx bx-store-alt me-1 text-primary'></i> ID: {{ item.id_sucursal }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if item.ubicacion_especifica %}
+                            <span class="d-block text-dark fw-medium"><i class='bx bxs-map me-1 text-secondary'></i> {{ item.ubicacion_especifica }}</span>
+                        {% else %}
+                            <span class="text-muted fst-italic ms-2 small">-- Sin ubicar --</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="fs-5 fw-bold {% if item.cantidad <= item.stock_minimo %}text-danger{% else %}text-success{% endif %}">
+                            {{ item.cantidad }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                         {% if item.cantidad <= item.stock_minimo %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1 rounded-2">Bajo Stock (Min: {{ item.stock_minimo }})</span>
+                        {% else %}
+                            <span class="badge bg-success bg-opacity-10 text-success px-2 py-1 rounded-2">OK</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <fluent-button appearance="outline" class="small-button" onclick="window.location.href='{% url 'editar_inventario' item.id_inventario %}'">
+                            <i class='bx bx-edit-alt me-1'></i> Editar
+                        </fluent-button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <div class="d-flex flex-column align-items-center justify-content-center text-muted">
+                            <i class='bx bx-box display-1 mb-3 opacity-25'></i>
+                            <h5 class="fw-bold">No hay stock registrado</h5>
+                            <p class="mb-0">Este producto no tiene existencias registradas en esta selección.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-</div>
+</fluent-card>
 {% endblock %}

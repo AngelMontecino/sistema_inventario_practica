@@ -5,33 +5,34 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0">Apertura de Caja</h4>
+        <fluent-card class="p-4">
+            <div class="border-bottom pb-3 mb-3">
+                <h4 class="mb-0 fw-bold text-success"><i class='bx bxs-lock-open-alt me-2'></i>Apertura de Caja</h4>
             </div>
-            <div class="card-body">
-                {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
+            
+            {% if error %}
+                <div class="alert alert-danger mb-3">{{ error }}</div>
+            {% endif %}
 
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="monto_inicial" class="form-label">Monto Inicial en Efectivo</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input type="number" step="0.01" class="form-control" id="monto_inicial" name="monto_inicial" value="0.00" required>
-                        </div>
-                        <div class="form-text">Ingrese el dinero base con el que inicia el turno.</div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="monto_inicial" class="form-label small fw-bold text-secondary">Monto Inicial en Efectivo</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-success fw-bold">$</span>
+                        <input type="number" step="0.01" class="form-control border-start-0 ps-0 fw-bold" id="monto_inicial" name="monto_inicial" value="0.00" required>
                     </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-success btn-lg">Abrir Caja</button>
-                        <a href="{% url 'gestion_caja' %}" class="btn btn-outline-secondary">Cancelar</a>
-                    </div>
-                </form>
-            </div>
-        </div>
+                    <div class="form-text mt-2"><i class='bx bx-info-circle'></i> Ingrese el dinero base con el que inicia el turno.</div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <fluent-button appearance="outline" onclick="window.location.href='{% url 'gestion_caja' %}'">Cancelar</fluent-button>
+                    <fluent-button appearance="accent" type="submit" style="--accent-fill-rest: #198754;">
+                        <i class='bx bx-check me-2'></i> Abrir Caja
+                    </fluent-button>
+                </div>
+            </form>
+        </fluent-card>
     </div>
 </div>
 {% endblock %}

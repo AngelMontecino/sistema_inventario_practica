@@ -7,20 +7,21 @@
     <title>{% block title %}Sistema Inventario{% endblock %}</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.2/litera/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            padding-top: 56px;
-        }
-
-        /* Espacio para navbar fija */
-    </style>
+    <!-- Boxicons (Fluent-like icons) -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Microsoft Fluent UI Web Components -->
+    <script type="module" src="https://unpkg.com/@fluentui/web-components"></script>
+    {% load static %}
+    <link href="{% static 'css/fluent.css' %}" rel="stylesheet">
 </head>
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'home' %}">Sistema Inventario</a>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
+                Sistema Inventario
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -28,34 +29,53 @@
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'lista_productos' %}">Productos</a>
+                        <a class="nav-link" href="{% url 'lista_productos' %}">
+                            <i class='bx bx-box me-1'></i>Productos
+                        </a>
                     </li>
                     <li class="nav-item">
-                    <a class="nav-link {% if 'sucursales' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'lista_sucursales' %}">Sucursales</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if 'inventario' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'lista_inventario' %}">Inventario</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if 'terceros' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'lista_terceros' %}">Terceros</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if 'documentos' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'crear_documento' %}">Punto Venta</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if 'caja' in request.path %}active fw-bold text-primary{% endif %}" href="{% url 'gestion_caja' %}">Caja</a>
-                </li>
-                {% if request.session.rol == 'ADMIN' %}
-                <li class="nav-item">
-                    <a class="nav-link {% if 'usuarios' in request.path %}active fw-bold text-warning{% endif %}" href="{% url 'lista_usuarios' %}">Administración</a>
-                </li>
-                {% endif %}
+                        <a class="nav-link {% if 'sucursales' in request.path %}active{% endif %}" href="{% url 'lista_sucursales' %}">
+                            <i class='bx bx-store me-1'></i>Sucursales
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'inventario' in request.path %}active{% endif %}" href="{% url 'lista_inventario' %}">
+                            <i class='bx bx-list-check me-1'></i>Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'terceros' in request.path %}active{% endif %}" href="{% url 'lista_terceros' %}">
+                            <i class='bx bx-user-pin me-1'></i>Terceros
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'documentos' in request.path %}active{% endif %}" href="{% url 'crear_documento' %}">
+                            <i class='bx bx-basket me-1'></i>Punto Venta
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'caja' in request.path %}active{% endif %}" href="{% url 'gestion_caja' %}">
+                            <i class='bx bx-dollar-circle me-1'></i>Caja
+                        </a>
+                    </li>
+                    {% if request.session.rol == 'ADMIN' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'usuarios' in request.path %}active{% endif %}" href="{% url 'lista_usuarios' %}">
+                            <i class='bx bx-cog me-1'></i>Administración
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
-                {% if request.session.nombre %}
-                <span class="navbar-text me-3 text-light">Hola, {{ request.session.nombre }}</span>
-                {% endif %}
-                <div class="d-flex">
-                    <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm">Cerrar Sesión</a>
+                <div class="d-flex align-items-center gap-3">
+                    {% if request.session.nombre %}
+                    <span class="navbar-text d-flex align-items-center gap-2">
+                        <i class='bx bx-user-circle fs-4'></i>
+                        {{ request.session.nombre }}
+                    </span>
+                    {% endif %}
+                    <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">
+                        <i class='bx bx-log-out'></i> Salir
+                    </a>
                 </div>
             </div>
         </div>
