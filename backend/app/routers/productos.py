@@ -70,7 +70,7 @@ def crear_producto(
             
     return crud.create_producto(db=db, producto=producto)
 
-@router.get("/", response_model=List[schemas.ProductoResponse])
+@router.get("/", response_model=schemas.ProductoPaginatedResponse)
 def listar_productos(
     skip: int = 0, 
     limit: int = 100, 

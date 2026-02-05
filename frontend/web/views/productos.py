@@ -20,6 +20,11 @@ def lista_productos(request):
     precio_min = request.GET.get("precio_min")
     precio_max = request.GET.get("precio_max")
     
+    # Paginación
+    page = int(request.GET.get("page", 1))
+    limit = 100
+    skip = (page - 1) * limit
+    
     productos = []
     categorias = [] # Para el filtro
     error = None
@@ -34,7 +39,10 @@ def lista_productos(request):
 
     # 2. Obtener Productos con filtros
     try:
-        params = {}
+        params = {
+            "skip": skip,
+            "limit": limit
+        }
         if busqueda: params["busqueda"] = busqueda
         if unidad_medida: params["unidad_medida"] = unidad_medida
         if id_categoria: params["id_categoria"] = id_categoria
@@ -44,7 +52,9 @@ def lista_productos(request):
         response = httpx.get(f"{BACKEND_URL}/productos/", headers=headers, params=params)
         
         if response.status_code == 200:
-            productos = response.json()
+            data = response.json()
+            productos = data.get("items", [])
+            total_items = data.get("total", 0)
         elif response.status_code == 401:
             request.session.flush()
             return redirect("login")
@@ -54,6 +64,12 @@ def lista_productos(request):
     except httpx.RequestError as exc:
          error = f"Error de conexión con API: {exc}"
 
+    # Calcular páginas
+    import math
+    total_pages = math.ceil(total_items / limit) if limit > 0 else 1
+    
+   
+    
     context = {
         "productos": productos,
         "categorias": categorias,
@@ -62,7 +78,13 @@ def lista_productos(request):
         "unidad_medida": unidad_medida,
         "id_categoria": int(id_categoria) if id_categoria else "",
         "precio_min": precio_min,
-        "precio_max": precio_max
+        "precio_max": precio_max,
+        "page": page,
+        "limit": limit,
+        "total_items": total_items,
+        "total_pages": total_pages,
+        "has_next": page < total_pages,
+        "has_prev": page > 1
     }
 
     return render(request, "productos/productos.html", context)

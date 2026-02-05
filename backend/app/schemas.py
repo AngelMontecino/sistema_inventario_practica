@@ -147,6 +147,10 @@ class ProductoResponse(ProductoBase):
     categoria: Optional[CategoriaBase] = None
     model_config = ConfigDict(from_attributes=True)
 
+class ProductoPaginatedResponse(BaseModel):
+    total: int
+    items: List[ProductoResponse]
+
 
 
 # INVENTARIO SCHEMAS

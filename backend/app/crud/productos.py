@@ -97,8 +97,11 @@ def get_productos(
             filtros_busqueda.append(models.Producto.id_producto == int(busqueda))
             
         query = query.filter(or_(*filtros_busqueda))
+    
+    total = query.count()
+    items = query.offset(skip).limit(limit).all()
         
-    return query.offset(skip).limit(limit).all()
+    return {"total": total, "items": items}
 
 def get_producto_by_codigo(db: Session, codigo: str):
     return db.query(models.Producto).filter(models.Producto.codigo_barras == codigo).first()
