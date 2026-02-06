@@ -62,7 +62,10 @@ def api_buscar_productos(request):
     
     try:
         response = httpx.get(f"{BACKEND_URL}/productos/", params={"busqueda": q}, headers=headers)
-        return JsonResponse(response.json(), safe=False)
+        data = response.json()
+        # La API ahora retorna paginación (total, items)
+        items = data.get("items", []) if isinstance(data, dict) and "items" in data else data
+        return JsonResponse(items, safe=False)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
