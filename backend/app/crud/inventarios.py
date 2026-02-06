@@ -49,6 +49,9 @@ def create_inventario(db: Session, inventario: schemas.InventarioCreate):
     if existe:
         return None # Ya existe en esa ubicación
         
+    if inventario.cantidad > inventario.stock_maximo:
+        return "ExcedeStockMaximo"
+
     db_inventario = models.Inventario(**inventario.model_dump())
     db.add(db_inventario)
     db.commit()
@@ -61,6 +64,14 @@ def update_inventario(db: Session, inventario_id: int, inventario_update: schema
         return None
         
     update_data = inventario_update.model_dump(exclude_unset=True)
+    
+    # Validar nuevo stock vs máximo
+    nueva_cantidad = update_data.get("cantidad", db_inventario.cantidad)
+    nuevo_maximo = update_data.get("stock_maximo", db_inventario.stock_maximo)
+    
+    if nueva_cantidad > nuevo_maximo:
+        return "ExcedeStockMaximo"
+
     for key, value in update_data.items():
         setattr(db_inventario, key, value)
         

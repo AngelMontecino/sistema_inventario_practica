@@ -16,6 +16,8 @@ def inicializar_stock(
     if current_user.rol != models.TipoRol.ADMIN:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     nuevo_inventario = crud.create_inventario(db=db, inventario=inventario)
+    if nuevo_inventario == "ExcedeStockMaximo":
+         raise HTTPException(status_code=400, detail="La cantidad inicial excede el stock máximo permitido")
     if not nuevo_inventario:
          raise HTTPException(status_code=400, detail="El producto ya está registrado en esta sucursal")
     return nuevo_inventario
@@ -82,6 +84,8 @@ def ajustar_stock(
     if current_user.rol != models.TipoRol.ADMIN:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     db_inventario = crud.update_inventario(db, inventario_id=inventario_id, inventario_update=inventario_update)
+    if db_inventario == "ExcedeStockMaximo":
+        raise HTTPException(status_code=400, detail="La cantidad excede el stock máximo permitido")
     if not db_inventario:
         raise HTTPException(status_code=404, detail="Registro de inventario no encontrado")
     return db_inventario
