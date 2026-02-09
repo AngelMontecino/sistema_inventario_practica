@@ -165,3 +165,28 @@ i.bx {
     border: none;
     box-shadow: var(--fluent-depth-4);
 }
+
+
+fluent-card:not(:defined) {
+    display: block;
+    background-color: var(--fluent-surface);
+    border: 1px solid var(--fluent-border);
+    border-radius: var(--fluent-radius);
+    box-shadow: var(--fluent-depth-4);
+}
+
+fluent-button:not(:defined) {
+    display: inline-block;
+    min-width: 32px;
+    padding: 0 16px;
+    height: 32px;
+    line-height: 30px;
+    background-color: #ffffff;
+    border: 1px solid var(--fluent-border-input);
+    border-radius: var(--fluent-radius);
+    font-family: inherit;
+    font-size: 14px;
+    text-align: center;
+    cursor: pointer;
+    vertical-align: middle;
+}
