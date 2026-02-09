@@ -9,6 +9,7 @@ urlpatterns = [
     # Redirigir raíz a Dashboard
     path('', home.dashboard_view, name='home'),
     path('dashboard/', home.dashboard_view, name='dashboard'),
+    path('dashboard/charts', home.get_charts_data, name='dashboard_charts'),
     
     # Auth
     path('login/', views.login_view, name='login'),

@@ -76,6 +76,136 @@
     </div>
 </div>
 
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Ventas Semanales -->
+    <div class="col-md-8 mb-4 mb-md-0">
+        <fluent-card class="h-100 p-3">
+            <h5 class="fw-bold text-secondary mb-3">Ventas Últimos 7 Días</h5>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="ventasSemanalesChart"></canvas>
+            </div>
+        </fluent-card>
+    </div>
+    
+    <!-- Categorías -->
+    <div class="col-md-4">
+        <fluent-card class="h-100 p-3">
+            <h5 class="fw-bold text-secondary mb-3">Ventas por Categoría</h5>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="categoriasChart"></canvas>
+            </div>
+        </fluent-card>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const ctxVentas = document.getElementById('ventasSemanalesChart').getContext('2d');
+    const ctxCat = document.getElementById('categoriasChart').getContext('2d');
+    
+    // Obtener parámetros de sucursal si existen
+    const urlParams = new URLSearchParams(window.location.search);
+    const sucursalIdParam = urlParams.get('sucursal_id');
+    const sucursalId = sucursalIdParam ? sucursalIdParam : "";
+    
+    // Construir URL correctamente
+    const apiUrl = sucursalId ? `/dashboard/charts?sucursal_id=${sucursalId}` : `/dashboard/charts`;
+
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Datos recibidos:", data); 
+            
+            if (!data.ventas_semanales || data.ventas_semanales.length === 0) {
+                 console.warn("No hay datos de ventas semanales o el formato es incorrecto.");
+            }
+
+            // Gráfico Ventas Semanales
+            const labelsSemana = data.ventas_semanales.map(d => d.fecha);
+            const dataSemana = data.ventas_semanales.map(d => d.total);
+            
+            new Chart(ctxVentas, {
+                type: 'bar',
+                data: {
+                    labels: labelsSemana,
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: dataSemana,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 2. Gráfico Categorías
+            const labelsCat = data.ventas_por_categoria.map(d => d.categoria);
+            const dataCat = data.ventas_por_categoria.map(d => d.total);
+            const backgroundColors = [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)'
+            ];
+
+            new Chart(ctxCat, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsCat,
+                    datasets: [{
+                        data: dataCat,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12 }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(err => {
+            console.error("Error cargando gráficos:", err);
+            // Mostrar alerta visual al usuario solo si falla
+            const card = document.getElementById('ventasSemanalesChart').closest('fluent-card');
+            if(card) {
+                card.innerHTML += `<div class="alert alert-danger mt-3">Error cargando gráficos: ${err.message}</div>`;
+            }
+        });
+});
+</script>
+
 <!-- Alertas Stock Table -->
 <div class="row">
     <div class="col-12">

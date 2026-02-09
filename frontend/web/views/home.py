@@ -56,3 +56,25 @@ def dashboard_view(request):
         "sucursal_seleccionada": sucursal_id,
         "error": error
     })
+
+@token_required
+def get_charts_data(request):
+    import httpx
+    from django.http import JsonResponse
+    
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    sucursal_id = request.GET.get("sucursal_id", "")
+    params = {}
+    if sucursal_id:
+        params["sucursal_id"] = sucursal_id
+        
+    try:
+        response = httpx.get(f"{BACKEND_URL}/dashboard/charts", params=params, headers=headers)
+        if response.status_code == 200:
+            return JsonResponse(response.json(), safe=False)
+        else:
+            return JsonResponse({"error": "Error backend"}, status=response.status_code)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
