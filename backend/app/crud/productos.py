@@ -17,6 +17,33 @@ def get_categorias_arbol(db: Session):
 def get_subcategorias(db: Session, categoria_id: int):
     return db.query(models.Categoria).filter(models.Categoria.id_padre == categoria_id).all()
 
+def _flatten_categorias(categorias, level=0, result=None):
+    if result is None:
+        result = []
+    
+    for cat in categorias:
+    
+        prefix = "— " * level
+        nombre_display = f"{prefix}{cat.nombre}"
+        
+        cat_copy = models.Categoria(
+            id_categoria=cat.id_categoria,
+            nombre=nombre_display,
+            id_padre=cat.id_padre
+        )
+      
+        
+        result.append(cat_copy)
+        
+        if cat.hijas:
+            _flatten_categorias(cat.hijas, level + 1, result)
+            
+    return result
+
+def get_categorias_flat_sorted(db: Session):
+    arbol = get_categorias_arbol(db)
+    return _flatten_categorias(arbol)
+
 def _tiene_productos_recursivo(categoria: models.Categoria) -> bool:
     # Verificar si la categoría actual tiene productos
     if categoria.productos:

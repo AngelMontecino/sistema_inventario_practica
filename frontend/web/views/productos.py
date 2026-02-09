@@ -294,37 +294,62 @@ def asignar_inventario(request, pk):
 def lista_inventario(request):
     token = request.session.get("access_token")
     headers = {"Authorization": f"Bearer {token}"}
-    sucursales = []
+    
     inventario = []
-    sucursal_seleccionada = request.GET.get("sucursal_id", "")
-    busqueda = request.GET.get("q", "")
     error = None
+    
+    # Filtros
+    sucursal_id = request.GET.get("sucursal_id", "")
+    categoria_id = request.GET.get("categoria_id", "")
+    busqueda = request.GET.get("q", "")
+    alerta = request.GET.get("alerta", "")
+    
+    params = {}
+    if sucursal_id:
+        params["sucursal_id"] = sucursal_id
+    if categoria_id:
+        params["categoria_id"] = categoria_id
+    if busqueda:
+        params["busqueda"] = busqueda
+    if alerta == "true":
+        params["alerta_stock"] = "true"
 
+    sucursales = []
+    categorias = []
+    
     try:
-        resp_sucursales = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
-        if resp_sucursales.status_code == 200:
-            sucursales = resp_sucursales.json()
-        
+
+        if request.session.get("rol") == "ADMIN": 
+             resp_suc = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
+             if resp_suc.status_code == 200:
+                 sucursales = resp_suc.json()
+
+        #  Obtener Categorías (para el filtro)
+        resp_cat = httpx.get(f"{BACKEND_URL}/productos/categorias/", params={"flat": "true"}, headers=headers)
+        if resp_cat.status_code == 200:
+            categorias = resp_cat.json()
+
+        # Obtener Inventario (Agrupado)
         url_inv = f"{BACKEND_URL}/inventarios/agrupado"
-        params = {}
-        if sucursal_seleccionada: params["sucursal_id"] = sucursal_seleccionada
-        if busqueda: params["busqueda"] = busqueda
-            
-        resp_inv = httpx.get(url_inv, params=params, headers=headers)
-        if resp_inv.status_code == 200:
-            inventario = resp_inv.json()
-        elif resp_inv.status_code == 401:
-            request.session.flush()
+        response = httpx.get(url_inv, params=params, headers=headers)
+        
+        if response.status_code == 200:
+            inventario = response.json()
+        elif response.status_code == 401:
             return redirect("login")
         else:
-             error = "Error al cargar el inventario."
+            error = f"Error al cargar inventario: {response.status_code}"
+
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
     return render(request, "inventario/inventario.html", {
-        "inventario": inventario, 
+        "inventario": inventario,
         "sucursales": sucursales,
-        "sucursal_seleccionada": int(sucursal_seleccionada) if sucursal_seleccionada else None,
+        "categorias": categorias,
+        "filtro_sucursal": int(sucursal_id) if sucursal_id else None,
+        "filtro_categoria": int(categoria_id) if categoria_id else None,
+        "filtro_alerta": alerta == "true",
         "busqueda": busqueda,
         "error": error
     })

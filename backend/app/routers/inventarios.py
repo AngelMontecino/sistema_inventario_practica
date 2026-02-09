@@ -29,6 +29,7 @@ def consultar_inventario(
     sucursal_id: Optional[int] = None,
     producto_id: Optional[int] = None,
     alerta_stock: Optional[bool] = False,
+    categoria_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
@@ -37,13 +38,15 @@ def consultar_inventario(
     sucursal_id: Filtra por sucursal específica.
     producto_id: Filtra por producto específico.
     alerta_stock: Si es True, muestra solo productos con stock bajo (crítico).
+    categoria_id: Filtra por categoría de producto.
     """
-    return crud.get_inventarios(db, skip=skip, limit=limit, sucursal_id=sucursal_id, producto_id=producto_id, alerta_stock=alerta_stock)
+    return crud.get_inventarios(db, skip=skip, limit=limit, sucursal_id=sucursal_id, producto_id=producto_id, alerta_stock=alerta_stock, categoria_id=categoria_id)
 
 @router.get("/agrupado", response_model=List[schemas.InventarioAgrupadoResponse])
 def obtener_inventario_agrupado(
     sucursal_id: Optional[int] = None,
     busqueda: Optional[str] = None,
+    categoria_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
@@ -52,7 +55,7 @@ def obtener_inventario_agrupado(
     """
     try:
         target_sucursal = sucursal_id if sucursal_id else current_user.id_sucursal
-        resultado = crud.get_inventario_agrupado(db, sucursal_id=target_sucursal, busqueda=busqueda)
+        resultado = crud.get_inventario_agrupado(db, sucursal_id=target_sucursal, busqueda=busqueda, categoria_id=categoria_id)
         return resultado
     except Exception as e:
         print(f"DEBUG ERROR: {e}")

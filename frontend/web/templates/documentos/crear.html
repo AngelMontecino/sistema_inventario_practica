@@ -418,10 +418,20 @@
 
         function renderTable() {
             tableBody.innerHTML = "";
-            let total = 0;
+            let totalGen = 0;
+            let totalNeto = 0;
+            let totalIva = 0;
             
             detalles.forEach((d, index) => {
-                total += d.subtotal;
+                totalGen += d.subtotal;
+                
+                // Calcular Neto e IVA por línea (asumiendo precio Bruto)
+                const netoLinea = Math.round(d.subtotal / 1.19);
+                const ivaLinea = d.subtotal - netoLinea;
+                
+                totalNeto += netoLinea;
+                totalIva += ivaLinea;
+
                 const row = `
                     <tr>
                         <td>${d.nombre}</td>
@@ -440,14 +450,7 @@
                 tableBody.insertAdjacentHTML("beforeend", row);
             });
 
-          
-            const totalGen = total;
-            const iva = Math.round(totalGen * 0.19); // Aproximacion si fuera neto
-            const neto = totalGen - iva; // Matematicamente incorrecto si total es Bruto.
-            
-            // Asumiendo PRECIO FINAL (Bruto):
-            const precioNetoReal = Math.round(totalGen / 1.19);
-            const ivaReal = totalGen - precioNetoReal;
+    
 
             const tipoDoc = document.getElementById("tipoDocumento").value;
             const rowNeto = document.getElementById("rowNeto");
@@ -463,8 +466,8 @@
             }
 
             document.getElementById("totalGeneral").textContent = "$" + totalGen.toLocaleString("es-CL");
-            document.getElementById("totalNeto").textContent = "$" + precioNetoReal.toLocaleString("es-CL");
-            document.getElementById("totalIva").textContent = "$" + ivaReal.toLocaleString("es-CL");
+            document.getElementById("totalNeto").textContent = "$" + totalNeto.toLocaleString("es-CL");
+            document.getElementById("totalIva").textContent = "$" + totalIva.toLocaleString("es-CL");
         }
 
         // --- Guardar Documento ---

@@ -12,7 +12,7 @@
 
 <!-- Filtros y Búsqueda -->
 <fluent-card class="mb-4 p-4">
-    <form method="GET" class="row g-3 align-items-end">
+    <form method="GET" class="row g-3 align-items-end" onsubmit="event.preventDefault(); return false;">
         <!-- Filtro Sucursal -->
         <div class="col-md-4">
             <label for="sucursal_id" class="form-label fw-bold text-secondary text-uppercase small">Filtrar por Sucursal</label>
@@ -23,6 +23,21 @@
                     {% for suc in sucursales %}
                         <option value="{{ suc.id_sucursal }}" {% if sucursal_seleccionada == suc.id_sucursal %}selected{% endif %}>
                             {{ suc.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <!-- Filtro Categoría -->
+        <div class="col-md-3">
+            <label for="categoria_id" class="form-label fw-bold text-secondary text-uppercase small">Filtrar por Categoría</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class='bx bx-category text-primary'></i></span>
+                <select class="form-select border-start-0 ps-0 bg-light" id="categoria_id" name="categoria_id" onchange="this.form.submit()">
+                    <option value="" {% if not filtro_categoria %}selected{% endif %}>-- Todas --</option>
+                    {% for cat in categorias %}
+                        <option value="{{ cat.id_categoria }}" {% if filtro_categoria == cat.id_categoria %}selected{% endif %}>
+                            {{ cat.nombre }}
                         </option>
                     {% endfor %}
                 </select>
@@ -108,22 +123,32 @@
     document.addEventListener('DOMContentLoaded', function() {
         const inputBusqueda = document.getElementById('q');
         const selectSucursal = document.getElementById('sucursal_id');
+        const selectCategoria = document.getElementById('categoria_id');
         const tableBody = document.getElementById('inventarioBody');
         let timeout = null;
 
         function updateTable() {
             const url = new URL(window.location);
             
-            if (inputBusqueda.value) {
+            // Parametro Busqueda
+            if (inputBusqueda && inputBusqueda.value) {
                 url.searchParams.set('q', inputBusqueda.value);
             } else {
                 url.searchParams.delete('q');
             }
 
-            if (selectSucursal.value) {
+            // Parametro Sucursal
+            if (selectSucursal && selectSucursal.value) {
                 url.searchParams.set('sucursal_id', selectSucursal.value);
             } else {
                 url.searchParams.delete('sucursal_id');
+            }
+            
+            // Parametro Categoria
+            if (selectCategoria && selectCategoria.value) {
+                url.searchParams.set('categoria_id', selectCategoria.value);
+            } else {
+                url.searchParams.delete('categoria_id');
             }
 
             // Actualizar URL sin recargar
@@ -142,6 +167,9 @@
                 .catch(err => console.error('Error actualizando inventario:', err));
         }
 
+     
+
+        // Buscador: de 300ms
         if (inputBusqueda) {
             inputBusqueda.addEventListener('input', () => {
                 clearTimeout(timeout);
@@ -149,9 +177,15 @@
             });
         }
 
+        // Selectores: Cambio inmediato
         if (selectSucursal) {
             selectSucursal.addEventListener('change', updateTable);
-            selectSucursal.removeAttribute('onchange');
+            selectSucursal.removeAttribute('onchange'); // Evitar doble submit si estaba inline
+        }
+        
+        if (selectCategoria) {
+            selectCategoria.addEventListener('change', updateTable);
+            selectCategoria.removeAttribute('onchange');
         }
     });
 </script>

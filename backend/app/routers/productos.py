@@ -23,7 +23,14 @@ def crear_categoria(
     return crud.create_categoria(db=db, categoria=categoria)
 
 @router.get("/categorias/", response_model=List[schemas.CategoriaResponse])
-def listar_categorias(db: Session = Depends(get_db), current_user: models.Usuario = Depends(get_current_active_user)):
+def listar_categorias(
+    flat: bool = False,
+    db: Session = Depends(get_db), 
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    if flat:
+        # Devuelve lista plana ordenada 
+        return crud.get_categorias_flat_sorted(db)
     # Devuelve el árbol completo (categorías y subcategorías)
     return crud.get_categorias_arbol(db)
 
