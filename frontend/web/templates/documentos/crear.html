@@ -46,15 +46,18 @@
             </select>
         </div>
         <div class="col-md-4">
-            <label for="tercero" class="form-label small fw-bold">Cliente / Proveedor</label>
-            <select class="form-select" id="tercero">
-                <option value="">-- Seleccionar --</option>
-                {% for t in terceros %}
-                    <option value="{{ t.id_tercero }}" data-cliente="{{ t.es_cliente }}" data-proveedor="{{ t.es_proveedor }}">
-                        {{ t.nombre }} ({{ t.rut }})
-                    </option>
-                {% endfor %}
-            </select>
+            <label for="searchTercero" class="form-label small fw-bold">Cliente / Proveedor</label>
+            <div class="position-relative">
+                <input type="hidden" id="tercero">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class='bx bx-search'></i></span>
+                    <input type="text" class="form-control" id="searchTercero" placeholder="Buscar por Nombre o RUT..." autocomplete="off">
+                    <button class="btn btn-outline-secondary" type="button" id="btnClearTercero" title="Limpiar" style="display: none;">
+                        <i class='bx bx-x'></i>
+                    </button>
+                </div>
+                <ul class="list-group shadow position-absolute w-100" id="terceroResults" style="top: 100%; z-index: 1050; display: none; max-height: 200px; overflow-y: auto;"></ul>
+            </div>
         </div>
         <div class="col-md-2">
             <label class="form-label small fw-bold">Fecha</label>
@@ -231,9 +234,78 @@
         });
 
       
+        // Búsqueda de Terceros (Clientes/Proveedores) 
+        const searchTerceroInput = document.getElementById("searchTercero");
+        const terceroResults = document.getElementById("terceroResults");
+        const terceroHidden = document.getElementById("tercero");
+        const btnClearTercero = document.getElementById("btnClearTercero");
+        let debounceTercero;
+
+        searchTerceroInput.addEventListener("input", function() {
+            clearTimeout(debounceTercero);
+            const query = this.value;
+            
+            // Si borra todo, limpiar 
+            if (query.length === 0) {
+                terceroHidden.value = "";
+                btnClearTercero.style.display = 'none';
+            } else {
+                btnClearTercero.style.display = 'block';
+            }
+
+            if (query.length < 2) {
+                terceroResults.style.display = 'none';
+                return;
+            }
+
+            debounceTercero = setTimeout(() => {
+                fetch(`{% url 'api_buscar_terceros' %}?q=${query}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        terceroResults.innerHTML = "";
+                        if (data.length > 0) {
+                            terceroResults.style.display = 'block';
+                            data.forEach(t => {
+                                const li = document.createElement("li");
+                                li.className = "list-group-item hover-bg border-bottom";
+                                // Iconos segun rol
+                                let badge = "";
+                                if(t.es_cliente) badge += `<span class='badge bg-info me-1'>C</span>`;
+                                if(t.es_proveedor) badge += `<span class='badge bg-warning text-dark'>P</span>`;
+                                
+                                li.innerHTML = `<div><strong>${t.nombre}</strong> <small class='text-muted'>(${t.rut})</small></div><div class='small'>${badge}</div>`;
+                                li.onclick = () => selectTercero(t);
+                                terceroResults.appendChild(li);
+                            });
+                        } else {
+                            terceroResults.style.display = 'none';
+                        }
+                    });
+            }, 300);
+        });
+
+        function selectTercero(t) {
+            terceroHidden.value = t.id_tercero;
+            searchTerceroInput.value = `${t.nombre} (${t.rut})`;
+            terceroResults.style.display = 'none';
+            btnClearTercero.style.display = 'block';
+        }
+
+        btnClearTercero.addEventListener("click", function() {
+            terceroHidden.value = "";
+            searchTerceroInput.value = "";
+            terceroResults.style.display = 'none';
+            this.style.display = 'none';
+            searchTerceroInput.focus();
+        });
+
+        // Cerrar listas al hacer click fuera
         document.addEventListener("click", function(e) {
             if (e.target !== searchInput) {
                 resultsList.style.display = 'none';
+            }
+            if (!searchTerceroInput.contains(e.target) && !terceroResults.contains(e.target)) {
+                terceroResults.style.display = 'none';
             }
         });
 

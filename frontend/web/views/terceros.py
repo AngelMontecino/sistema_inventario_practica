@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 import httpx
 from ..decorators import token_required
 
@@ -148,3 +149,18 @@ def editar_tercero(request, pk):
         "tercero": tercero, 
         "error": error
     })
+
+@token_required
+def api_buscar_terceros(request):
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    q = request.GET.get("q", "")
+    
+    try:
+        # Reutilizamos el endpoint lista que ya soporta busqueda
+        params = {"busqueda": q}
+        response = httpx.get(f"{BACKEND_URL}/terceros/", params=params, headers=headers)
+        data = response.json()
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

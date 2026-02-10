@@ -55,5 +55,6 @@ urlpatterns = [
 
     # API Proxies
     path('api/productos/buscar', views.api_buscar_productos, name='api_buscar_productos'),
+    path('api/terceros/buscar', views.api_buscar_terceros, name='api_buscar_terceros'),
     path('api/stock/consultar_v2', api_new.api_ver_stock_fresh, name='api_ver_stock'),
 ]
