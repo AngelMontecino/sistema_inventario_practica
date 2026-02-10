@@ -18,14 +18,20 @@
             <label for="sucursal_id" class="form-label fw-bold text-secondary text-uppercase small">Filtrar por Sucursal</label>
             <div class="input-group">
                 <span class="input-group-text bg-light border-end-0"><i class='bx bx-store text-primary'></i></span>
-                <select class="form-select border-start-0 ps-0 bg-light" id="sucursal_id" name="sucursal_id" onchange="this.form.submit()">
-                    <option value="" {% if not sucursal_seleccionada %}selected{% endif %} disabled>-- Selecciona Sucursal --</option>
-                    {% for suc in sucursales %}
-                        <option value="{{ suc.id_sucursal }}" {% if sucursal_seleccionada == suc.id_sucursal %}selected{% endif %}>
-                            {{ suc.nombre }}
-                        </option>
-                    {% endfor %}
-                </select>
+                {% if request.session.rol == 'VENDEDOR' %}
+                    <!-- VENDEDOR: Mostrar sucursal fija -->
+                    <input type="text" class="form-control border-start-0 ps-0 bg-light text-muted" value="{{ request.session.nombre_sucursal }}" disabled readonly>
+                {% else %}
+                    <!-- ADMIN: Selector de sucursales -->
+                    <select class="form-select border-start-0 ps-0 bg-light" id="sucursal_id" name="sucursal_id" onchange="this.form.submit()">
+                        <option value="" {% if not sucursal_seleccionada %}selected{% endif %} disabled>-- Selecciona Sucursal --</option>
+                        {% for suc in sucursales %}
+                            <option value="{{ suc.id_sucursal }}" {% if sucursal_seleccionada == suc.id_sucursal %}selected{% endif %}>
+                                {{ suc.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
             </div>
         </div>
         <!-- Filtro Categoría -->

@@ -304,6 +304,10 @@ def lista_inventario(request):
     busqueda = request.GET.get("q", "")
     alerta = request.GET.get("alerta", "")
     
+    # Auto-filtro para vendedores
+    if request.session.get("rol") == "VENDEDOR":
+        sucursal_id = request.session.get("id_sucursal")
+    
     params = {}
     if sucursal_id:
         params["sucursal_id"] = sucursal_id

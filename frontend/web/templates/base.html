@@ -30,6 +30,7 @@
 
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    {% if request.session.rol != 'VENDEDOR' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'lista_productos' %}">
                             <i class='bx bx-box me-1'></i>Productos
@@ -40,6 +41,7 @@
                             <i class='bx bx-store me-1'></i>Sucursales
                         </a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link {% if 'inventario' in request.path %}active{% endif %}" href="{% url 'lista_inventario' %}">
                             <i class='bx bx-list-check me-1'></i>Inventario
@@ -73,6 +75,9 @@
                     <span class="navbar-text d-flex align-items-center gap-2">
                         <i class='bx bx-user-circle fs-4'></i>
                         {{ request.session.nombre }}
+                        {% if request.session.nombre_sucursal %}
+                        <small>| {{ request.session.nombre_sucursal }}</small>
+                        {% endif %}
                     </span>
                     {% endif %}
                     <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-danger">

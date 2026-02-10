@@ -295,6 +295,8 @@ class Token(BaseModel):
     rol: str
     nombre: str
     id_sucursal: int
+    id_usuario: int
+    nombre_sucursal: Optional[str] = None
 
 class TokenData(BaseModel):
     email: Optional[str] = None

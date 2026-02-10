@@ -33,6 +33,8 @@ def login_view(request):
                 request.session["rol"] = data.get("rol")
                 request.session["nombre"] = data.get("nombre")
                 request.session["id_sucursal"] = data.get("id_sucursal")
+                request.session["id_usuario"] = data.get("id_usuario")
+                request.session["nombre_sucursal"] = data.get("nombre_sucursal")
                 
                 # Redirigir al inicio o lista de productos
                 return redirect("home") 

@@ -11,6 +11,10 @@ def dashboard_view(request):
     token = request.session.get("access_token")
     headers = {"Authorization": f"Bearer {token}"}
     
+    # Redireccionar Vendedores
+    if request.session.get("rol") == "VENDEDOR":
+        return redirect("lista_inventario")
+    
     stats = {}
     sucursales = []
     

@@ -24,6 +24,7 @@
             <label for="fecha_fin" class="form-label small fw-bold text-secondary">Fecha Fin</label>
             <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}">
         </div>
+        {% if request.session.rol != 'VENDEDOR' %}
         <div class="col-md-3">
             <label for="sucursal_id" class="form-label small fw-bold text-secondary">Sucursal</label>
             <select class="form-select" id="sucursal_id" name="sucursal_id">
@@ -33,6 +34,7 @@
                 {% endfor %}
             </select>
         </div>
+        {% endif %}
         <div class="col-md-2">
             <fluent-button appearance="accent" class="w-100" type="submit">
                 <i class='bx bx-filter-alt me-2'></i> Filtrar

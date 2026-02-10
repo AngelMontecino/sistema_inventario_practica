@@ -74,9 +74,11 @@
                         {% endif %}
                     </td>
                     <td class="text-center">
+                        {% if request.session.rol != 'VENDEDOR' %}
                         <fluent-button appearance="outline" class="small-button" onclick="window.location.href='{% url 'editar_inventario' item.id_inventario %}'">
                             <i class='bx bx-edit-alt me-1'></i> Editar
                         </fluent-button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}

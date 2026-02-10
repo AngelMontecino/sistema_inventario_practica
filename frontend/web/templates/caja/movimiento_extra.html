@@ -21,7 +21,9 @@
                     <label for="tipo" class="form-label small fw-bold text-secondary">Tipo de Movimiento</label>
                     <select class="form-select" id="tipo" name="tipo" required>
                         <option value="INGRESO">Ingreso (Dinero entra a caja)</option>
+                        {% if request.session.rol != 'VENDEDOR' %}
                         <option value="EGRESO">Egreso (Dinero sale de caja)</option>
+                        {% endif %}
                     </select>
                 </div>
 

@@ -35,7 +35,9 @@
             <label for="tipoOperacion" class="form-label small fw-bold">Operación</label>
             <select class="form-select" id="tipoOperacion">
                 <option value="VENTA" selected>Venta</option>
+                {% if request.session.rol != 'VENDEDOR' %}
                 <option value="COMPRA">Compra</option>
+                {% endif %}
             </select>
         </div>
         <div class="col-md-3">
