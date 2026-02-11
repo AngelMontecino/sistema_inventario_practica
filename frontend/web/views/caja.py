@@ -191,9 +191,7 @@ def ver_reportes(request):
         if sucursal_id:
             params["sucursal_id"] = sucursal_id
 
-        # Filtros de Seguridad para Vendedor
         if request.session.get("rol") == "VENDEDOR":
-            params["usuario_id"] = request.session.get("id_usuario")
             params["sucursal_id"] = request.session.get("id_sucursal") # Fuerza su sucursal
 
         resp = httpx.get(f"{BACKEND_URL}/caja/reportes", params=params, headers=headers)
