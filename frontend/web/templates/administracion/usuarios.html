@@ -37,6 +37,8 @@
                     <td>
                         {% if usuario.rol == 'ADMIN' %}
                             <span class="badge bg-danger">ADMIN</span>
+                        {% elif usuario.rol == 'SUPERADMIN' %}
+                            <span class="badge bg-dark">SUPERADMIN</span>
                         {% elif usuario.rol == 'VENDEDOR' %}
                             <span class="badge bg-info text-dark">VENDEDOR</span>
                         {% else %}
@@ -54,9 +56,13 @@
                         {% endif %}
                     </td>
                     <td>
+                        {% if request.session.rol == 'SUPERADMIN' or usuario.rol == 'VENDEDOR' or request.session.id_usuario == usuario.id_usuario %}
                         <fluent-button appearance="outline" onclick="window.location.href='{% url 'editar_usuario' usuario.id_usuario %}'">
                             Editar
                         </fluent-button>
+                        {% else %}
+                        <span class="badge bg-light text-muted border">Restringido</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}

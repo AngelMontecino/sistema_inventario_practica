@@ -55,7 +55,15 @@ def crear_usuario(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    # Validar permisos de creación
+    if current_user.rol == models.TipoRol.SUPERADMIN:
+        pass # Puede crear cualquier rol
+    elif current_user.rol == models.TipoRol.ADMIN:
+        # ADMIN solo puede crear VENDEDOR
+        if usuario.rol != models.TipoRol.VENDEDOR:
+             raise HTTPException(status_code=403, detail="Como Administrador, solo puedes crear Vendedores.")
+    else:
+        # VENDEDOR no puede crear usuarios 
         raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
    
 
@@ -82,12 +90,31 @@ def actualizar_usuario(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
-    # Lógica de permisos
-    #  Admin puede editar a cualquiera
-    if current_user.rol == models.TipoRol.ADMIN:
-        pass # Permitido todo
+    # Lógica de permisos (RBAC)
     
-    # Vendedor solo se puede editar a sí mismo
+    # 1. SUPERADMIN: Puede editar a cualquiera
+    if current_user.rol == models.TipoRol.SUPERADMIN:
+        pass 
+
+    # 2. ADMIN: Restricciones
+    elif current_user.rol == models.TipoRol.ADMIN:
+        # No puede editar a otro ADMIN o SUPERADMIN (a menos que sea él mismo)
+        if usuario_id != current_user.id_usuario:
+             # Buscar al usuario objetivo para ver su rol actual
+             target_user = crud.get_usuario(db, usuario_id)
+             if target_user and target_user.rol in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
+                 raise HTTPException(status_code=403, detail="No tienes permisos para editar a otro Administrador o Superadmin.")
+        
+        # Validar cambios de Rol (No puede ascender a nadie a ADMIN o SUPERADMIN)
+        if usuario_update.rol and usuario_update.rol in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
+             # Si se está editando a sí mismo, tal vez pueda mantener su rol, pero no cambiarse a SUPERADMIN
+             if usuario_update.rol == models.TipoRol.SUPERADMIN:
+                 raise HTTPException(status_code=403, detail="No puedes auto-ascenderte a Superadmin.")
+             # Si intenta hacer a otro ADMIN
+             if usuario_id != current_user.id_usuario:
+                 raise HTTPException(status_code=403, detail="No tienes permisos para asignar el rol de Administrador.")
+
+    # 3. VENDEDOR: Solo a sí mismo y con restricciones
     elif current_user.id_usuario == usuario_id:
         # Validar que no intente cambiar campos sensibles
         if usuario_update.rol is not None:

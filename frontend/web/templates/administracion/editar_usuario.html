@@ -28,7 +28,14 @@
                     <label for="rol" class="form-label small fw-bold text-secondary">Rol</label>
                     <select class="form-select" id="rol" name="rol" required>
                         <option value="VENDEDOR" {% if usuario.rol == 'VENDEDOR' %}selected{% endif %}>Vendedor</option>
-                        <option value="ADMIN" {% if usuario.rol == 'ADMIN' %}selected{% endif %}>Administrador</option>
+                        
+                        {% if request.session.rol == 'SUPERADMIN' %}
+                            <option value="ADMIN" {% if usuario.rol == 'ADMIN' %}selected{% endif %}>Administrador</option>
+                            <option value="SUPERADMIN" {% if usuario.rol == 'SUPERADMIN' %}selected{% endif %}>Superadmin</option>
+                        {% elif usuario.rol == 'ADMIN' %}
+                             {# Si es Admin editándose a sí mismo, mostramos Admin para que se vea su rol, pero backend bloqueará cambio #}
+                             <option value="ADMIN" selected>Administrador</option>
+                        {% endif %}
                     </select>
                 </div>
 

@@ -20,7 +20,8 @@ def admin_required(view_func):
             return redirect('login')
             
         # 2 Verificar Rol
-        if request.session.get('rol') != 'ADMIN':
+       
+        if request.session.get('rol') not in ['ADMIN', 'SUPERADMIN']:
             # Redirigir a lista_productos con error
             from django.urls import reverse
             import urllib.parse

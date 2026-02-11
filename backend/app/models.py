@@ -24,6 +24,7 @@ from app.database import Base
 
 
 class TipoRol(str, enum.Enum):
+    SUPERADMIN = "SUPERADMIN"
     ADMIN = "ADMIN"
     VENDEDOR = "VENDEDOR"
 

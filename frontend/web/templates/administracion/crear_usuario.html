@@ -43,7 +43,10 @@
                     <label for="rol" class="form-label small fw-bold text-secondary">Rol</label>
                     <select class="form-select" id="rol" name="rol" required>
                         <option value="VENDEDOR">Vendedor</option>
-                        <option value="ADMIN">Administrador</option>
+                        {% if request.session.rol == 'SUPERADMIN' %}
+                            <option value="ADMIN">Administrador</option>
+                            <option value="SUPERADMIN">Superadmin</option>
+                        {% endif %}
                     </select>
                 </div>
 
