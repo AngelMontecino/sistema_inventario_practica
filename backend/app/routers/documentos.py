@@ -18,6 +18,13 @@ def crear_documento(
     - **Venta**: Valida stock y descuenta inventario.
     - **Compra**: Aumenta stock en inventario.
     """
+    # Validar Caja Abierta 
+    estado_caja = crud.verificar_estado_caja(db, documento.id_sucursal)
+    if estado_caja["estado"] != "ABIERTA":
+         if estado_caja["estado"] == "PENDIENTE_CIERRE":
+             raise HTTPException(status_code=400, detail=f"BLOQUEO: {estado_caja['mensaje']}")
+         raise HTTPException(status_code=400, detail="No hay caja abierta en esta sucursal. Debe abrir caja para realizar operaciones.")
+
     # Asignar usuario autenticado
     try:
         documento.id_usuario = current_user.id_usuario

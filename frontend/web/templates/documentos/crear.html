@@ -17,6 +17,47 @@
     }
 </style>
 
+{% if estado_caja and estado_caja.estado != 'ABIERTA' %}
+<div class="container d-flex flex-column justify-content-center align-items-center" style="min-height: 60vh;">
+    {% if estado_caja.estado == 'PENDIENTE_CIERRE' %}
+        <div class="text-center p-5 bg-white rounded shadow border-start border-5 border-danger">
+            <h1 class="text-danger display-1 mb-3"><i class='bx bxs-error'></i></h1>
+            <h2 class="fw-bold text-danger mb-3">Cierre Pendiente Oblicatorio</h2>
+            <p class="lead mb-4">
+                La caja del día <strong>{{ estado_caja.info.fecha|date:"d/m/Y" }}</strong> ({{ estado_caja.info.usuario_nombre }}) sigue abierta.<br>
+                Debe cerrar la caja anterior antes de poder emitir nuevos documentos.
+            </p>
+            <div class="d-grid gap-2 col-8 mx-auto">
+                <a href="{% url 'gestion_caja' %}" class="btn btn-danger btn-lg">
+                    <i class='bx bx-money'></i> Ir a Cerrar Caja
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center p-5 bg-white rounded shadow border-start border-5 border-warning">
+            <h1 class="text-warning display-1 mb-3"><i class='bx bxs-lock-alt'></i></h1>
+            <h2 class="fw-bold text-secondary mb-3">Caja Cerrada</h2>
+            <p class="lead mb-4">
+                No hay una caja abierta en esta sucursal.<br>
+                Debe abrir la caja para comenzar a operar.
+            </p>
+            <div class="d-grid gap-2 col-8 mx-auto">
+                <a href="{% url 'gestion_caja' %}" class="btn btn-primary btn-lg">
+                    <i class='bx bx-money'></i> Abrir Caja
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+<script>
+    // Deshabilitar formulario por si acaso 
+    document.addEventListener("DOMContentLoaded", function() {
+        // Nada que ejecutar porque el contenido principal está oculto
+    });
+</script>
+{% else %}
+<!-- CONTENIDO PRINCIPAL SOLO SI ESTA ABIERTA -->
+
 <div class="row mb-4 align-items-center">
     <div class="col-auto me-auto">
         <h2>Crear Documento</h2>
@@ -607,4 +648,5 @@
         });
     });
 </script>
+{% endif %}
 {% endblock %}

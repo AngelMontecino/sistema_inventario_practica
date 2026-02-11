@@ -22,8 +22,40 @@
                 <h5 class="fw-bold text-primary">Estado de Caja</h5>
             </div>
             <div>
-                {% if resumen and resumen.estado == 'ABIERTA' %}
-                    <h2 class="text-success fw-bold mb-3"><i class='bx bxs-lock-open-alt'></i> ABIERTA</h2>
+                {% if estado_caja.estado == 'PENDIENTE_CIERRE' %}
+                    <div class="alert alert-danger mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class='bx bxs-error-alt fs-1'></i>
+                            <div>
+                                <h5 class="alert-heading fw-bold mb-1">¡Cierre Pendiente!</h5>
+                                <p class="mb-0">La caja del día <strong>{{ estado_caja.info.fecha|date:"d/m/Y" }}</strong> (abierta por {{ estado_caja.info.usuario_nombre }}) sigue abierta.</p>
+                                <p class="mb-0 small">No se pueden realizar nuevas ventas hasta que esta caja sea cerrada.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% if resumen %}
+                        <ul class="list-unstyled mb-4 text-muted border-start border-4 border-danger ps-3">
+                             <li class="mb-1"><strong class="text-dark">Saldo Teórico:</strong> ${{ resumen.saldo_teorico|intcomma }}</li>
+                        </ul>
+                    {% endif %}
+                    
+                    {% if request.session.id_usuario == estado_caja.info.usuario_id or request.session.rol == 'ADMIN' %}
+                         <fluent-button appearance="accent" class="w-100" style="--accent-fill-rest: #dc3545;" onclick="window.location.href='{% url 'cerrar_caja' %}'">Cerrar Caja Pendiente</fluent-button>
+                    {% else %}
+                         <div class="d-grid">
+                             <button class="btn btn-outline-danger" disabled>Solo {{ estado_caja.info.usuario_nombre }} o Admin puede cerrar</button>
+                         </div>
+                    {% endif %}
+
+                {% elif estado_caja.estado == 'ABIERTA' %}
+                    <h2 class="text-success fw-bold mb-1"><i class='bx bxs-lock-open-alt'></i> ABIERTA</h2>
+                    <p class="text-muted mb-3 small">
+                        Abierta por: <strong>{{ estado_caja.info.usuario_nombre }}</strong> 
+                        <br>
+                        {{ estado_caja.info.fecha|date:"d/m/Y H:i" }}
+                    </p>
+                    
+                    {% if resumen %}
                     <ul class="list-unstyled mb-4 text-muted">
                         <li class="mb-2"><strong class="text-dark">Saldo Inicial:</strong> ${{ resumen.saldo_inicial|intcomma }}</li>
                         <li class="mb-2"><strong class="text-dark">Ventas (Ingresos):</strong> ${{ resumen.ingresos_ventas|intcomma }}</li>
@@ -32,10 +64,20 @@
                         <li class="mb-2"><strong class="text-dark">Otros Egresos:</strong> ${{ resumen.egresos_extra|intcomma }}</li>
                         <li class="border-top pt-2 mt-2 h5 text-dark"><strong>Saldo Teórico Actual:</strong> ${{ resumen.saldo_teorico|intcomma }}</li>
                     </ul>
-                    <fluent-button appearance="accent" class="w-100" style="--accent-fill-rest: #dc3545;" onclick="window.location.href='{% url 'cerrar_caja' %}'">Cerrar Caja</fluent-button>
+                    {% endif %}
+                    
+                    {% if request.session.id_usuario == estado_caja.info.usuario_id or request.session.rol == 'ADMIN' %}
+                        <fluent-button appearance="accent" class="w-100" style="--accent-fill-rest: #dc3545;" onclick="window.location.href='{% url 'cerrar_caja' %}'">Cerrar Caja</fluent-button>
+                    {% else %}
+                        <div class="alert alert-info py-2 small">
+                            <i class='bx bx-info-circle'></i> Gestionada por {{ estado_caja.info.usuario_nombre }}
+                        </div>
+                    {% endif %}
+
                 {% else %}
+                    <!-- CERRADA -->
                     <h2 class="text-secondary fw-bold mb-3"><i class='bx bxs-lock-alt'></i> CERRADA</h2>
-                    <p class="text-muted mb-4">Debe abrir la caja para realizar ventas.</p>
+                    <p class="text-muted mb-4">Debe abrir la caja para que la sucursal pueda operar.</p>
                     <fluent-button appearance="accent" class="w-100" style="--accent-fill-rest: #198754;" onclick="window.location.href='{% url 'abrir_caja' %}'">Abrir Caja</fluent-button>
                 {% endif %}
             </div>

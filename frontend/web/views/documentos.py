@@ -39,18 +39,26 @@ def crear_documento(request):
 
     # GET: Cargar Interfaz
     terceros = []
+    estado_caja = {}
+    
     try:
         # Cargar todos los terceros para el select
         resp = httpx.get(f"{BACKEND_URL}/terceros/", headers=headers)
         if resp.status_code == 200:
             terceros = resp.json()
+            
+        # Verificar Estado Caja 
+        resp_caja = httpx.get(f"{BACKEND_URL}/caja/estado", headers=headers)
+        if resp_caja.status_code == 200:
+            estado_caja = resp_caja.json()
     except:
         pass
 
     return render(request, "documentos/crear.html", {
         "terceros": terceros,
         "usuario_nombre": request.session.get("nombre"),
-        "sucursal_id": request.session.get("id_sucursal")
+        "sucursal_id": request.session.get("id_sucursal"),
+        "estado_caja": estado_caja
     })
 
 @token_required

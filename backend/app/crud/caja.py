@@ -19,7 +19,8 @@ def abrir_caja(db: Session, sucursal_id: int, usuario_id: int, monto: float):
     # Verificar estado actual
     ultimo = get_ultimo_cierre_o_apertura(db, sucursal_id)
     if ultimo and ultimo.tipo == models.TipoMovimientoCaja.APERTURA:
-        pass
+        # Ya existe una caja abierta 
+        return {"error": f"Ya existe una caja abierta por {ultimo.usuario.nombre}. Solo puede haber una caja abierta por sucursal."}
         
     movimiento = models.MovimientosCaja(
         id_sucursal=sucursal_id,
@@ -32,6 +33,29 @@ def abrir_caja(db: Session, sucursal_id: int, usuario_id: int, monto: float):
     db.commit()
     db.refresh(movimiento)
     return movimiento
+
+def verificar_estado_caja(db: Session, sucursal_id: int):
+    ultimo = get_ultimo_cierre_o_apertura(db, sucursal_id)
+    
+    if not ultimo or ultimo.tipo == models.TipoMovimientoCaja.CIERRE:
+        return {"estado": "CERRADA", "mensaje": "No hay caja abierta"}
+    
+    # Es APERTURA
+    hoy = datetime.now().date()
+    fecha_apertura = ultimo.fecha.date()
+    
+    if fecha_apertura < hoy:
+        return {
+            "estado": "PENDIENTE_CIERRE", 
+            "mensaje": f"Caja abierta del día {fecha_apertura}. Debe cerrarla antes de continuar.",
+            "info": ultimo
+        }
+    
+    return {
+        "estado": "ABIERTA", 
+        "mensaje": "Caja abierta y operativa",
+        "info": ultimo
+    }
 
 def registrar_movimiento_caja(db: Session, movimiento: schemas.MovimientoCajaCreate):
     # Dynamic import to avoid circular dependency

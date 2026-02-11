@@ -17,7 +17,37 @@ def abrir_caja(
     """
     Registra APERTURA de caja para la sucursal del usuario.
     """
-    return crud.abrir_caja(db=db, sucursal_id=current_user.id_sucursal, usuario_id=current_user.id_usuario, monto=monto_inicial)
+    resultado = crud.abrir_caja(db=db, sucursal_id=current_user.id_sucursal, usuario_id=current_user.id_usuario, monto=monto_inicial)
+    if isinstance(resultado, dict) and "error" in resultado:
+        raise HTTPException(status_code=400, detail=resultado["error"])
+    return resultado
+
+@router.get("/estado", response_model=schemas.EstadoCajaResponse)
+def consultar_estado_caja(
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    """
+    Consulta el estado de la caja de la sucursal: ABIERTA, CERRADA, PENDIENTE_CIERRE
+    """
+    resultado = crud.verificar_estado_caja(db, current_user.id_sucursal)
+    
+    # Serializar 'info' si existe (es un objeto ORM MovimientosCaja)
+    info_data = None
+    if resultado.get("info"):
+        obj = resultado["info"]
+        info_data = {
+            "id_movimiento": obj.id_movimiento,
+            "fecha": obj.fecha,
+            "usuario_nombre": obj.usuario.nombre,
+            "usuario_id": obj.id_usuario
+        }
+    
+    return {
+        "estado": resultado["estado"],
+        "mensaje": resultado["mensaje"],
+        "info": info_data
+    }
 
 @router.post("/cierre", response_model=schemas.CierreCajaResponse)
 def cerrar_caja(

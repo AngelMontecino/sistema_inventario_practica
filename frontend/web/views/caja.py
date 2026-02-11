@@ -28,8 +28,18 @@ def gestion_caja(request):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
+    # Obtener Estado 
+    estado_caja = {}
+    try:
+        resp_estado = httpx.get(f"{BACKEND_URL}/caja/estado", headers=headers)
+        if resp_estado.status_code == 200:
+            estado_caja = resp_estado.json()
+    except httpx.RequestError:
+        pass
+
     return render(request, "caja/gestion.html", {
         "resumen": resumen,
+        "estado_caja": estado_caja,
         "error": error
     })
 

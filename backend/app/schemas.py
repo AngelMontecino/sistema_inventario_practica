@@ -254,6 +254,17 @@ class MovimientoCajaResponse(MovimientoCajaBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+class EstadoCajaInfo(BaseModel):
+    id_movimiento: int
+    fecha: datetime
+    usuario_nombre: str
+    usuario_id: int
+
+class EstadoCajaResponse(BaseModel):
+    estado: str # ABIERTA, CERRADA, PENDIENTE_CIERRE
+    mensaje: str
+    info: Optional[EstadoCajaInfo] = None
+
 class CajaResumenResponse(BaseModel):
     saldo_inicial: Decimal
     ingresos_ventas: Decimal
