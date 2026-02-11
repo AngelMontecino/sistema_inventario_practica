@@ -199,6 +199,8 @@ class DetalleDocumentoCreate(DetalleDocumentoBase):
 class DetalleDocumentoResponse(DetalleDocumentoBase):
     id_detalle: int
     id_producto: int
+    ubicacion_especifica: Optional[str] = None
+    producto: Optional["ProductoResponse"] = None 
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -229,6 +231,7 @@ class DocumentoResponse(DocumentoBase):
     detalles: List[DetalleDocumentoResponse] = []
     total: Optional[Decimal] = None
     usuario: Optional["UsuarioResponse"] = None
+    tercero: Optional["ClienteProveedorResponse"] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -280,9 +283,14 @@ class CierreCajaRequest(BaseModel):
     monto_real: Decimal = Field(decimal_places=2)
     id_apertura: Optional[int] = None
 
-class CierreCajaResponse(CajaResumenResponse):
-    monto_real: Decimal
-    diferencia: Decimal
+class ReporteProductoItem(BaseModel):
+    id_producto: int
+    nombre: str
+    codigo_barras: Optional[str] = None
+    cantidad_ventas: int
+    total_ventas: Decimal
+    cantidad_compras: int
+    total_compras: Decimal
 
 class ReporteCajaItem(CajaResumenResponse):
     id_apertura: int
@@ -296,8 +304,13 @@ class ReporteCajaItem(CajaResumenResponse):
 
 class CajaSesionDetalleResponse(ReporteCajaItem):
     movimientos: List[MovimientoCajaResponse] = []
-   
-    documentos_summary: List[DocumentoResponse] = [] 
+    documentos_summary: List[DocumentoResponse] = []
+    productos: List[ReporteProductoItem] = [] 
+
+class CierreCajaResponse(CajaResumenResponse):
+    monto_real: Decimal
+    diferencia: Decimal
+    productos: List[ReporteProductoItem] = [] 
 
 
 # AUTH / TOKEN SCHEMAS

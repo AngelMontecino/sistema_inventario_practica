@@ -49,6 +49,45 @@
                 </div>
             </div>
 
+            <!-- Reporte de Productos -->
+            {% if resultado.productos %}
+            <div class="mb-5 text-start">
+                <h5 class="fw-bold mb-3 border-bottom pb-2">Resumen de Productos</h5>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped table-hover small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cant. Vendida</th>
+                                <th class="text-end">Total Ventas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prod in resultado.productos %}
+                            {% if prod.cantidad_ventas > 0 %}
+                            <tr>
+                                <td>{{ prod.nombre }} <small class="text-muted">({{ prod.codigo_barras|default:'-' }})</small></td>
+                                <td class="text-center">{{ prod.cantidad_ventas }}</td>
+                                <td class="text-end">${{ prod.total_ventas }}</td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                            <!-- Mostrar compras si existen -->
+                             {% for prod in resultado.productos %}
+                            {% if prod.cantidad_compras > 0 %}
+                            <tr class="">
+                                <td>{{ prod.nombre }} <small class="text-muted">(Compra)</small></td>
+                                <td class="text-center">{{ prod.cantidad_compras }}</td>
+                                <td class="text-end text-danger">-${{ prod.total_compras }}</td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
             <div class="d-grid gap-2 col-md-8 mx-auto">
                 <fluent-button appearance="accent" onclick="window.location.href='{% url 'gestion_caja' %}'">
                     Volver al Panel de Caja

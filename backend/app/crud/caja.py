@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
 from datetime import datetime
 from app import models, schemas
@@ -142,10 +142,14 @@ def cerrar_caja(db: Session, sucursal_id: int, usuario_id: int, monto_real: floa
     db.commit()
     db.refresh(cierre)
 
+    # Calcular reporte de productos
+    productos = obtener_reporte_productos(db, sucursal_id, resumen["fecha_inicio"], datetime.now()) # resumen needs start date
+
     return {
         **resumen,
         "monto_real": monto_real,
-        "diferencia": float(monto_real) - float(resumen['saldo_teorico'])
+        "diferencia": float(monto_real) - float(resumen['saldo_teorico']),
+        "productos": productos
     }
 
 
@@ -199,8 +203,80 @@ def calcular_resumen_periodo(db: Session, sucursal_id: int, fecha_inicio: dateti
         "egresos_compras": int(compras),
         "ingresos_extra": int(ingresos_extra),
         "egresos_extra": int(egresos_extra),
-        "saldo_teorico": int(saldo_teorico)
+        "saldo_teorico": int(saldo_teorico),
+        "fecha_inicio": fecha_inicio,
+        "fecha_fin": fecha_fin
     }
+
+def obtener_reporte_productos(db: Session, sucursal_id: int, fecha_inicio: datetime, fecha_fin: datetime):
+    """
+    Agrupa los productos vendidos y comprados en el periodo.
+    """
+    # Ventas
+    ventas = db.query(
+        models.Producto.id_producto,
+        models.Producto.nombre,
+        models.Producto.codigo_barras,
+        func.sum(models.DetalleDocumento.cantidad).label("cantidad"),
+        func.sum(models.DetalleDocumento.cantidad * models.DetalleDocumento.precio_unitario * (1 - models.DetalleDocumento.descuento / 100)).label("total")
+    ).join(models.DetalleDocumento.producto)\
+     .join(models.DetalleDocumento.documento)\
+     .filter(
+        models.Documento.id_sucursal == sucursal_id,
+        models.Documento.fecha_emision >= fecha_inicio,
+        models.Documento.fecha_emision <= fecha_fin,
+        models.Documento.tipo_operacion == models.TipoOperacion.VENTA,
+        models.Documento.estado_pago == models.EstadoPago.PAGADO
+    ).group_by(models.Producto.id_producto, models.Producto.nombre, models.Producto.codigo_barras).all()
+
+
+    compras = db.query(
+        models.Producto.id_producto,
+        models.Producto.nombre,
+        models.Producto.codigo_barras,
+        func.sum(models.DetalleDocumento.cantidad).label("cantidad"),
+        func.sum(models.DetalleDocumento.cantidad * models.DetalleDocumento.precio_unitario * (1 - models.DetalleDocumento.descuento / 100)).label("total")
+    ).join(models.DetalleDocumento.producto)\
+     .join(models.DetalleDocumento.documento)\
+     .filter(
+        models.Documento.id_sucursal == sucursal_id,
+        models.Documento.fecha_emision >= fecha_inicio,
+        models.Documento.fecha_emision <= fecha_fin,
+        models.Documento.tipo_operacion == models.TipoOperacion.COMPRA,
+        models.Documento.estado_pago == models.EstadoPago.PAGADO
+    ).group_by(models.Producto.id_producto, models.Producto.nombre, models.Producto.codigo_barras).all()
+
+    # Unificar
+    reporte = {}
+    
+    for v in ventas:
+        pid = v.id_producto
+        reporte[pid] = {
+            "id_producto": pid,
+            "nombre": v.nombre,
+            "codigo_barras": v.codigo_barras,
+            "cantidad_ventas": int(v.cantidad),
+            "total_ventas": int(v.total),
+            "cantidad_compras": 0,
+            "total_compras": 0
+        }
+        
+    for c in compras:
+        pid = c.id_producto
+        if pid not in reporte:
+            reporte[pid] = {
+                "id_producto": pid,
+                "nombre": c.nombre,
+                "codigo_barras": c.codigo_barras,
+                "cantidad_ventas": 0,
+                "total_ventas": 0,
+                "cantidad_compras": 0,
+                "total_compras": 0
+            }
+        reporte[pid]["cantidad_compras"] = int(c.cantidad)
+        reporte[pid]["total_compras"] = int(c.total)
+        
+    return list(reporte.values())
 
 def get_reporte_caja_historico(db, fecha_inicio: datetime, fecha_fin: datetime, sucursal_id: Optional[int] = None, usuario_id: Optional[int] = None):
     # Buscar Aperturas en rango
@@ -288,15 +364,23 @@ def get_detalle_sesion_caja(db: Session, id_apertura: int):
     ).order_by(models.MovimientosCaja.fecha.asc()).all()
     
     # 5 Obtener Documentos (Ventas/Compras) del periodo
-
-    docs = db.query(models.Documento).filter(
+    # Optimización: Cargar detalles y productos para el reporte detallado
+    docs = db.query(models.Documento).options(
+        joinedload(models.Documento.usuario),
+        joinedload(models.Documento.tercero),
+        joinedload(models.Documento.detalles).joinedload(models.DetalleDocumento.producto).joinedload(models.Producto.inventarios)
+    ).filter(
         models.Documento.id_sucursal == apertura.id_sucursal,
         models.Documento.fecha_emision >= apertura.fecha,
         models.Documento.fecha_emision <= fecha_fin,
         models.Documento.estado_pago == models.EstadoPago.PAGADO 
     ).order_by(models.Documento.fecha_emision.asc()).all()
     
-    # 6 Construir Respuesta
+    
+    # 6. Obtener reporte de productos
+    productos = obtener_reporte_productos(db, apertura.id_sucursal, apertura.fecha, fecha_fin)
+
+    # 7 Construir Respuesta
     diff = None
     monto_real = None
     if cierre:
@@ -320,5 +404,6 @@ def get_detalle_sesion_caja(db: Session, id_apertura: int):
         "monto_real": monto_real,
         "diferencia": diff,
         "movimientos": movs,
-        "documentos_summary": docs
+        "documentos_summary": docs,
+        "productos": productos
     }

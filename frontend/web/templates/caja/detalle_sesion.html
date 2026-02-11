@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load custom_math %}
 
 {% block title %}Detalle de Sesión de Caja{% endblock %}
 
@@ -74,6 +75,9 @@
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="documentos-tab" data-bs-toggle="tab" data-bs-target="#documentos" type="button" role="tab">Documentos (Ventas/Compras)</button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="productos-tab" data-bs-toggle="tab" data-bs-target="#productos" type="button" role="tab">Reporte Productos</button>
+    </li>
 </ul>
 
 <div class="tab-content pt-3" id="myTabContent">
@@ -131,6 +135,7 @@
                         <th>Vendedor</th>
                         <th>Estado</th>
                         <th class="text-end">Total</th>
+                        <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -142,14 +147,119 @@
                             {% else %}<span class="badge bg-warning text-dark">COMPRA</span>{% endif %}
                         </td>
                         <td>{{ doc.fecha_emision|date:"d/m/Y H:i" }}</td>
-                        <td>{{ doc.id_tercero|default:"-" }}</td>
+                        <td>{{ doc.tercero.nombre|default:"-" }}</td>
                         <td><small>{{ doc.usuario.nombre|default:"-" }}</small></td>
                         <td>{{ doc.estado_pago }}</td>
-                        <td class="text-end">${{ doc.total|default:"0"|intcomma }}</td>
-                    </tr>
+                        <td class="text-end">${{ doc.total|default:"0"|floatformat:0|intcomma }}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadDocDetails('{{ doc.folio }}', 'content-{{ doc.id_documento }}')">
+                                <i class='bx bx-show'></i>
+                            </button>
+                            
+                          
+                            <div id="content-{{ doc.id_documento }}" class="d-none">
+                                <div class="mb-3">
+                                    <strong>Fecha:</strong> {{ doc.fecha_emision|date:"d/m/Y H:i" }} <br>
+                                    <strong>Vendedor:</strong> {{ doc.usuario.nombre|default:"-" }} <br>
+                                    <strong>Tercero:</strong> {{ doc.id_tercero|default:"General" }}
+                                </div>
+                                <table class="table table-sm table-bordered" style="font-size: 0.9rem;">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Ubicación</th>
+                                            <th class="text-center">Cant.</th>
+                                            <th class="text-end">P. Unit</th>
+                                            <th class="text-end">Desc.</th>
+                                            <th class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for det in doc.detalles %}
+                                        <tr>
+                                            <td>{{ det.producto.nombre|default:det.id_producto }}</td> 
+                                            <td>
+                                                <small class="text-muted">
+                                                    {# Find inventory for this branch #}
+                                                    {% for inv in det.producto.inventarios %}
+                                                        {% if inv.id_sucursal == doc.id_sucursal %}
+                                                            {{ inv.ubicacion_especifica }}
+                                                        {% endif %}
+                                                    {% empty %}
+                                                        -
+                                                    {% endfor %}
+                                                </small>
+                                            </td>
+                                            <td class="text-center">{{ det.cantidad }}</td>
+                                            <td class="text-end">${{ det.precio_unitario|floatformat:0|intcomma }}</td>
+                                            <td class="text-end text-danger">
+                                                {% if det.descuento > 0 %}
+                                                -${{ det.descuento|floatformat:0|intcomma }}
+                                                {% else %}
+                                                -
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end fw-bold">
+                                                
+                                                {% with subtotal=det.cantidad|multiply:det.precio_unitario %}
+                                                    ${{ subtotal|floatformat:0|intcomma }}
+                                                {% endwith %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                <div class="text-end fw-bold fs-5 border-top pt-2">
+                                    Total: ${{ doc.total|floatformat:0|intcomma }}
+                                </div>
+                            </div>
+                        </td>
                     {% empty %}
                     <tr><td colspan="6">No hay documentos registrados en esta sesión.</td></tr>
                     {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tab Productos -->
+    <div class="tab-pane fade" id="productos" role="tabpanel">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>Producto</th>
+                        <th>Código</th>
+                        <th class="text-center">Cant. Vendida</th>
+                        <th class="text-end">Total Ventas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prod in detalle.productos %}
+                    {% if prod.cantidad_ventas > 0 %}
+                    <tr>
+                        <td>{{ prod.nombre }}</td>
+                        <td>{{ prod.codigo_barras|default:"-" }}</td>
+                        <td class="text-center">{{ prod.cantidad_ventas }}</td>
+                        <td class="text-end">${{ prod.total_ventas|intcomma }}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% for prod in detalle.productos %}
+                    {% if prod.cantidad_compras > 0 %}
+                    <tr class="">
+                        <td>{{ prod.nombre }} <small>(Compra)</small></td>
+                        <td>{{ prod.codigo_barras|default:"-" }}</td>
+                        <td class="text-center">{{ prod.cantidad_compras }}</td>
+                        <td class="text-end text-danger">-${{ prod.total_compras|intcomma }}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if not detalle.productos %}
+                    <tr><td colspan="4" class="text-center text-muted">No hay movimientos de productos.</td></tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
@@ -161,4 +271,42 @@
     <div class="alert alert-info">No se encontraron detalles para esta sesión o hubo un error al cargarlos.</div>
 {% endif %}
 
+{% endblock %}
+
+{% block scripts %}
+<!-- Modal Detalle Documento -->
+<div class="modal fade" id="detalleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detalleModalLabel">Detalle Documento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalBodyContent">
+        <!-- Content will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    function loadDocDetails(folio, contentId) {
+        // Update Title
+        document.getElementById('detalleModalLabel').textContent = 'Detalle Documento: ' + (folio || 'S/N');
+        
+        // Get Content from hidden div
+        var content = document.getElementById(contentId).innerHTML;
+        
+        // Set to Modal Body
+        document.getElementById('modalBodyContent').innerHTML = content;
+
+        // Show Modal programmatically
+        var myModalEl = document.getElementById('detalleModal');
+        var modal = new bootstrap.Modal(myModalEl);
+        modal.show();
+    }
+</script>
 {% endblock %}
