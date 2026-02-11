@@ -228,6 +228,7 @@ class DocumentoResponse(DocumentoBase):
     
     detalles: List[DetalleDocumentoResponse] = []
     total: Optional[Decimal] = None
+    usuario: Optional["UsuarioResponse"] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -251,6 +252,7 @@ class MovimientoCajaResponse(MovimientoCajaBase):
     id_usuario: int
     id_documento_asociado: Optional[int]
     fecha: datetime
+    usuario: Optional["UsuarioResponse"] = None
 
     model_config = ConfigDict(from_attributes=True)
 

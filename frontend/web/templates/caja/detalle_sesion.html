@@ -105,7 +105,7 @@
                             {% else %}{{ mov.tipo }}{% endif %}
                         </td>
                         <td>{{ mov.descripcion }}</td>
-                        <td>{{ mov.id_usuario }}</td> 
+                        <td>{{ mov.usuario.nombre|default:mov.id_usuario }}</td> 
                         <td class="text-end fw-bold">
                             ${{ mov.monto|intcomma }}
                         </td>
@@ -128,6 +128,7 @@
                         <th>Operación</th>
                         <th>Fecha</th>
                         <th>Tercero</th>
+                        <th>Vendedor</th>
                         <th>Estado</th>
                         <th class="text-end">Total</th>
                     </tr>
@@ -142,6 +143,7 @@
                         </td>
                         <td>{{ doc.fecha_emision|date:"d/m/Y H:i" }}</td>
                         <td>{{ doc.id_tercero|default:"-" }}</td>
+                        <td><small>{{ doc.usuario.nombre|default:"-" }}</small></td>
                         <td>{{ doc.estado_pago }}</td>
                         <td class="text-end">${{ doc.total|default:"0"|intcomma }}</td>
                     </tr>
