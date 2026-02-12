@@ -239,6 +239,14 @@ def detalle_sesion(request, id_apertura):
             
             for doc in detalle.get("documentos_summary", []):
                 if doc.get("fecha_emision"): doc["fecha_emision"] = datetime.fromisoformat(doc["fecha_emision"])
+                # Convertir detalles a numericos
+                for det in doc.get("detalles", []):
+                    try:
+                        det["cantidad"] = float(det.get("cantidad", 0))
+                        det["precio_unitario"] = float(det.get("precio_unitario", 0))
+                        det["descuento"] = float(det.get("descuento", 0))
+                    except (ValueError, TypeError):
+                        pass
             
             # Calcular Totales 
             egresos_compras = float(detalle.get("egresos_compras", 0))

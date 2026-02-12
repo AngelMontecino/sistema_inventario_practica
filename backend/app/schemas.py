@@ -142,9 +142,25 @@ class ActualizacionPrecioProducto(BaseModel):
     costo_neto: Optional[Decimal] = None
     precio_venta: Optional[Decimal] = None
 
+class InventarioBase(BaseModel):
+    cantidad: int = 0
+    ubicacion_especifica: str
+    stock_minimo: int = 5
+    stock_maximo: int = 100
+
+class InventarioSimpleResponse(InventarioBase):
+    id_inventario: int
+    id_sucursal: int
+    id_producto: int
+    model_config = ConfigDict(from_attributes=True)
+
+
+
+
 class ProductoResponse(ProductoBase):
     id_producto: int
     categoria: Optional[CategoriaBase] = None
+    inventarios: List["InventarioSimpleResponse"] = []
     model_config = ConfigDict(from_attributes=True)
 
 class ProductoPaginatedResponse(BaseModel):
@@ -155,11 +171,7 @@ class ProductoPaginatedResponse(BaseModel):
 
 # INVENTARIO SCHEMAS
 
-class InventarioBase(BaseModel):
-    cantidad: int = 0
-    ubicacion_especifica: str
-    stock_minimo: int = 5
-    stock_maximo: int = 100
+
 
 class InventarioCreate(InventarioBase):
     id_sucursal: int

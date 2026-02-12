@@ -161,7 +161,7 @@
                                 <div class="mb-3">
                                     <strong>Fecha:</strong> {{ doc.fecha_emision|date:"d/m/Y H:i" }} <br>
                                     <strong>Vendedor:</strong> {{ doc.usuario.nombre|default:"-" }} <br>
-                                    <strong>Tercero:</strong> {{ doc.id_tercero|default:"General" }}
+                                    <strong>Tercero:</strong> {{ doc.tercero.nombre|default:"Anónimo" }}
                                 </div>
                                 <table class="table table-sm table-bordered" style="font-size: 0.9rem;">
                                     <thead class="table-light">
@@ -176,11 +176,11 @@
                                     </thead>
                                     <tbody>
                                         {% for det in doc.detalles %}
-                                        <tr>
-                                            <td>{{ det.producto.nombre|default:det.id_producto }}</td> 
+                                            <td>
+                                                {{ det.producto.nombre|default:det.id_producto }}
+                                            </td> 
                                             <td>
                                                 <small class="text-muted">
-                                                    {# Find inventory for this branch #}
                                                     {% for inv in det.producto.inventarios %}
                                                         {% if inv.id_sucursal == doc.id_sucursal %}
                                                             {{ inv.ubicacion_especifica }}
@@ -190,11 +190,11 @@
                                                     {% endfor %}
                                                 </small>
                                             </td>
-                                            <td class="text-center">{{ det.cantidad }}</td>
+                                            <td class="text-center">{{ det.cantidad|floatformat:0 }}</td>
                                             <td class="text-end">${{ det.precio_unitario|floatformat:0|intcomma }}</td>
-                                            <td class="text-end text-danger">
+                                            <td class="text-end">
                                                 {% if det.descuento > 0 %}
-                                                -${{ det.descuento|floatformat:0|intcomma }}
+                                                {{ det.descuento|floatformat:0 }}%
                                                 {% else %}
                                                 -
                                                 {% endif %}
@@ -202,7 +202,11 @@
                                             <td class="text-end fw-bold">
                                                 
                                                 {% with subtotal=det.cantidad|multiply:det.precio_unitario %}
-                                                    ${{ subtotal|floatformat:0|intcomma }}
+                                                    {% if det.descuento > 0 %}
+                                                        ${{ subtotal|calculate_discounted_total:det.descuento|floatformat:0|intcomma }}
+                                                    {% else %}
+                                                        ${{ subtotal|floatformat:0|intcomma }}
+                                                    {% endif %}
                                                 {% endwith %}
                                             </td>
                                         </tr>
