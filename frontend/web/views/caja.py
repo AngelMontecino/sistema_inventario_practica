@@ -82,6 +82,22 @@ def cerrar_caja(request):
         resp = httpx.get(f"{BACKEND_URL}/caja/resumen", headers=headers)
         if resp.status_code == 200:
             resumen = resp.json()
+            # Parsear fechas para el template
+            from datetime import datetime, timezone
+            
+            for doc in resumen.get("documentos", []):
+                if doc.get("fecha_emision"):
+                    dt = datetime.fromisoformat(doc["fecha_emision"])
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    doc["fecha_emision"] = dt
+            
+            for mov in resumen.get("movimientos_extra", []):
+                if mov.get("fecha"):
+                    dt = datetime.fromisoformat(mov["fecha"])
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    mov["fecha"] = dt
     except:
         pass
 
@@ -98,6 +114,23 @@ def cerrar_caja(request):
             if response.status_code == 200:
                
                 resultado = response.json()
+                # Parsear fechas para el template de exito
+                from datetime import datetime, timezone
+
+                for doc in resultado.get("documentos", []):
+                    if doc.get("fecha_emision"):
+                        dt = datetime.fromisoformat(doc["fecha_emision"])
+                        if dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=timezone.utc)
+                        doc["fecha_emision"] = dt
+
+                for mov in resultado.get("movimientos_extra", []):
+                    if mov.get("fecha"):
+                        dt = datetime.fromisoformat(mov["fecha"])
+                        if dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=timezone.utc)
+                        mov["fecha"] = dt
+
                 return render(request, "caja/cierre_exito.html", {"resultado": resultado})
             else:
                  try:

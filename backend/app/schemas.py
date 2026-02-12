@@ -290,6 +290,9 @@ class CajaResumenResponse(BaseModel):
     egresos_extra: Decimal
     saldo_teorico: Decimal
     estado: str = "CERRADA"
+    
+    documentos: List["DocumentoResponse"] = []
+    movimientos_extra: List["MovimientoCajaResponse"] = []
 
 class CierreCajaRequest(BaseModel):
     monto_real: Decimal = Field(decimal_places=2)

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
+{% load custom_math %}
 {% block title %}Cerrar Caja{% endblock %}
 
 {% block content %}
@@ -58,7 +59,195 @@
                     </fluent-button>
                 </div>
             </form>
+
+            <!-- Detalle de Movimientos (Documentos y Extras) -->
+            <div class="mt-5">
+                <h5 class="fw-bold mb-3 border-bottom pb-2">Detalle de Operaciones</h5>
+                
+                <!-- Pestañas -->
+                <ul class="nav nav-tabs mb-3" id="cierreTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="docs-tab" data-bs-toggle="tab" data-bs-target="#docs" type="button">Documentos</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="extras-tab" data-bs-toggle="tab" data-bs-target="#extras" type="button">Movimientos Extra</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="cierreTabContent">
+                    <!-- Documentos -->
+                    <div class="tab-pane fade show active" id="docs" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Folio</th>
+                                        <th>Tipo</th>
+                                        <th>Hora</th>
+                                        <th>Tercero</th>
+                                        <th>Total</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for doc in resumen.documentos %}
+                                    <tr>
+                                        <td>{{ doc.folio|default:"-" }}</td>
+                                        <td>
+                                            {% if doc.tipo_operacion == "VENTA" %}<span class="badge bg-info text-dark">VENTA</span>
+                                            {% else %}<span class="badge bg-warning text-dark">COMPRA</span>{% endif %}
+                                        </td>
+                                        <td>{{ doc.fecha_emision|date:"H:i" }}</td>
+                                        <td>{{ doc.tercero.nombre|default:"Anónimo" }}</td>
+                                        <td class="text-end fw-bold">${{ doc.total|floatformat:0|intcomma }}</td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-outline-primary py-0" onclick="loadDocDetails('{{ doc.folio }}', 'content-{{ doc.id_documento }}')">
+                                                <i class='bx bx-show'></i>
+                                            </button>
+                                            <!-- Hidden Content for Modal -->
+                                            <div id="content-{{ doc.id_documento }}" class="d-none">
+                                                <div class="mb-3">
+                                                    <strong>Fecha:</strong> {{ doc.fecha_emision|date:"d/m/Y H:i" }} <br>
+                                                    <strong>Vendedor:</strong> {{ doc.usuario.nombre|default:"-" }} <br>
+                                                    <strong>Tercero:</strong> {{ doc.tercero.nombre|default:"Anónimo" }}
+                                                </div>
+                                                <table class="table table-sm table-bordered" style="font-size: 0.9rem;">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Producto</th>
+                                                            <th class="text-center">Cant.</th>
+                                                            <th class="text-end">P. Unit</th>
+                                                            <th class="text-end">Desc.</th>
+                                                            <th class="text-end">Total</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for det in doc.detalles %}
+                                                        <tr>
+                                                            <td>{{ det.producto.nombre|default:det.id_producto }}</td>
+                                                            <td class="text-center">{{ det.cantidad|floatformat:0 }}</td>
+                                                            <td class="text-end">${{ det.precio_unitario|floatformat:0|intcomma }}</td>
+                                                            <td class="text-end">
+                                                                {% if det.descuento > 0 %}{{ det.descuento|floatformat:0 }}%{% else %}-{% endif %}
+                                                            </td>
+                                                            <td class="text-end fw-bold">
+                                                                {% with subtotal=det.cantidad|multiply:det.precio_unitario %}
+                                                                    {% if det.descuento > 0 %}
+                                                                        ${{ subtotal|calculate_discounted_total:det.descuento|floatformat:0|intcomma }}
+                                                                    {% else %}
+                                                                        ${{ subtotal|floatformat:0|intcomma }}
+                                                                    {% endif %}
+                                                                {% endwith %}
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                                <div class="text-end fw-bold fs-5 border-top pt-2">
+                                                    Total: ${{ doc.total|floatformat:0|intcomma }}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="6" class="text-center text-muted">No hay documentos en este período.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Movimientos Extra -->
+                    <div class="tab-pane fade" id="extras" role="tabpanel">
+                         <div class="table-responsive">
+                            <table class="table table-sm table-hover small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Hora</th>
+                                        <th>Tipo</th>
+                                        <th>Monto</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for mov in resumen.movimientos_extra %}
+                                    <tr>
+                                        <td>{{ mov.fecha|date:"H:i" }}</td>
+                                        <td>
+                                            {% if mov.tipo == "INGRESO" %}<span class="badge bg-success">INGRESO</span>
+                                            {% else %}<span class="badge bg-danger">EGRESO</span>{% endif %}
+                                        </td>
+                                        <td class="text-end fw-bold">${{ mov.monto|floatformat:0|intcomma }}</td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-outline-secondary py-0" onclick="loadExtraDetails('{{ mov.descripcion }}', '{{ mov.usuario.nombre }}')">
+                                                <i class='bx bx-info-circle'></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="4" class="text-center text-muted">No hay movimientos extra.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
         </fluent-card>
     </div>
 </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Modal Detalle -->
+<div class="modal fade" id="detalleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detalleModalLabel">Detalle</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="modalBodyContent">
+        <!-- Content -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    function loadDocDetails(folio, contentId) {
+        document.getElementById('detalleModalLabel').textContent = 'Detalle Documento: ' + (folio || 'S/N');
+        var content = document.getElementById(contentId).innerHTML;
+        document.getElementById('modalBodyContent').innerHTML = content;
+        
+        var modalEl = document.getElementById('detalleModal');
+        var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+    
+    function loadExtraDetails(descripcion, usuario) {
+        document.getElementById('detalleModalLabel').textContent = 'Detalle Movimiento Extra';
+        var content = `
+            <div class="p-3">
+                <h6 class="fw-bold">Descripción:</h6>
+                <p class="mb-3">${descripcion || 'Sin descripción'}</p>
+                <h6 class="fw-bold">Registrado por:</h6>
+                <p class="mb-0">${usuario || '-'}</p>
+            </div>
+        `;
+        document.getElementById('modalBodyContent').innerHTML = content;
+        
+        var modalEl = document.getElementById('detalleModal');
+        var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+</script>
 {% endblock %}

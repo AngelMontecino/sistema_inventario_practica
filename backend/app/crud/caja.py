@@ -197,6 +197,27 @@ def calcular_resumen_periodo(db: Session, sucursal_id: int, fecha_inicio: dateti
         
     saldo_teorico = saldo_inicial + ventas + ingresos_extra - compras - egresos_extra
     
+    # Obtener Lista de Documentos
+    docs = db.query(models.Documento)\
+        .options(joinedload(models.Documento.tercero), joinedload(models.Documento.usuario))\
+        .filter(
+            models.Documento.id_sucursal == sucursal_id,
+            models.Documento.fecha_emision >= fecha_inicio,
+            models.Documento.fecha_emision <= fecha_fin,
+            models.Documento.estado_pago == models.EstadoPago.PAGADO
+        ).order_by(models.Documento.fecha_emision.desc()).all()
+        
+    # Obtener Lista de Movimientos Extra
+    movs_extra = db.query(models.MovimientosCaja)\
+        .options(joinedload(models.MovimientosCaja.usuario))\
+        .filter(
+            models.MovimientosCaja.id_sucursal == sucursal_id,
+            models.MovimientosCaja.fecha >= fecha_inicio,
+            models.MovimientosCaja.fecha <= fecha_fin,
+            models.MovimientosCaja.tipo.in_([models.TipoMovimientoCaja.INGRESO, models.TipoMovimientoCaja.EGRESO]),
+            models.MovimientosCaja.id_documento_asociado.is_(None)
+        ).order_by(models.MovimientosCaja.fecha.desc()).all()
+
     return {
         "saldo_inicial": int(saldo_inicial),
         "ingresos_ventas": int(ventas),
@@ -205,7 +226,9 @@ def calcular_resumen_periodo(db: Session, sucursal_id: int, fecha_inicio: dateti
         "egresos_extra": int(egresos_extra),
         "saldo_teorico": int(saldo_teorico),
         "fecha_inicio": fecha_inicio,
-        "fecha_fin": fecha_fin
+        "fecha_fin": fecha_fin,
+        "documentos": docs,
+        "movimientos_extra": movs_extra
     }
 
 def obtener_reporte_productos(db: Session, sucursal_id: int, fecha_inicio: datetime, fecha_fin: datetime):
