@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import models, schemas
 
 # CAJA (APERTURA / CIERRE / CUADRATURA)
@@ -41,7 +41,7 @@ def verificar_estado_caja(db: Session, sucursal_id: int):
         return {"estado": "CERRADA", "mensaje": "No hay caja abierta"}
     
     # Es APERTURA
-    hoy = datetime.now().date()
+    hoy = models.get_now_chile().date()
     fecha_apertura = ultimo.fecha.date()
     
     if fecha_apertura < hoy:
@@ -121,7 +121,7 @@ def obtener_resumen_caja(db: Session, sucursal_id: int, id_apertura: Optional[in
         }
     
     # Calcular hasta AHORA
-    resumen = calcular_resumen_periodo(db, sucursal_id, ultimo.fecha, datetime.now(), ultimo.monto)
+    resumen = calcular_resumen_periodo(db, sucursal_id, ultimo.fecha, models.get_now_chile() + timedelta(seconds=1), ultimo.monto)
     resumen["estado"] = "ABIERTA"
     return resumen
 
@@ -143,7 +143,7 @@ def cerrar_caja(db: Session, sucursal_id: int, usuario_id: int, monto_real: floa
     db.refresh(cierre)
 
     # Calcular reporte de productos
-    productos = obtener_reporte_productos(db, sucursal_id, resumen["fecha_inicio"], datetime.now()) # resumen needs start date
+    productos = obtener_reporte_productos(db, sucursal_id, resumen["fecha_inicio"], models.get_now_chile() + timedelta(seconds=1)) 
 
     return {
         **resumen,
@@ -325,7 +325,7 @@ def get_reporte_caja_historico(db, fecha_inicio: datetime, fecha_fin: datetime, 
             models.MovimientosCaja.fecha > ape.fecha
         ).order_by(models.MovimientosCaja.fecha.asc()).first()
         
-        fecha_fin_calculo = cierre.fecha if cierre else datetime.now() # Si no hay cierre, usar now? o marcar como ABIERTA
+        fecha_fin_calculo = cierre.fecha if cierre else models.get_now_chile() + timedelta(seconds=1) 
         
         # Calcular resumen
         resumen = calcular_resumen_periodo(db, ape.id_sucursal, ape.fecha, fecha_fin_calculo, ape.monto)
@@ -374,7 +374,7 @@ def get_detalle_sesion_caja(db: Session, id_apertura: int):
         models.MovimientosCaja.fecha > apertura.fecha
     ).order_by(models.MovimientosCaja.fecha.asc()).first()
     
-    fecha_fin = cierre.fecha if cierre else datetime.now()
+    fecha_fin = cierre.fecha if cierre else models.get_now_chile() + timedelta(seconds=1)
     
     # 3 Calcular Resumen Base 
     resumen = calcular_resumen_periodo(db, apertura.id_sucursal, apertura.fecha, fecha_fin, apertura.monto)

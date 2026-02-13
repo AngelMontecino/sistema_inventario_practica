@@ -2,6 +2,7 @@ import enum
 from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
+import pytz
 
 from sqlalchemy import (
     Boolean,
@@ -48,6 +49,10 @@ class TipoMovimientoCaja(str, enum.Enum):
     CIERRE = "CIERRE"
 
 
+# Configuración Hora
+def get_now_chile():
+    chile_tz = pytz.timezone('America/Santiago')
+    return datetime.now(chile_tz).replace(tzinfo=None)
 
 # MODELS
 
@@ -154,7 +159,7 @@ class Documento(Base):
     tipo_operacion: Mapped[TipoOperacion] = mapped_column(Enum(TipoOperacion), nullable=False)
     tipo_documento: Mapped[TipoDocumento] = mapped_column(Enum(TipoDocumento), default=TipoDocumento.BOLETA)
     folio: Mapped[Optional[str]] = mapped_column(String(50))
-    fecha_emision: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    fecha_emision: Mapped[datetime] = mapped_column(DateTime, default=get_now_chile)
     estado_pago: Mapped[EstadoPago] = mapped_column(Enum(EstadoPago), default=EstadoPago.PAGADO)
     observaciones: Mapped[Optional[str]] = mapped_column(Text)
 
@@ -198,7 +203,7 @@ class MovimientosCaja(Base):
     tipo: Mapped[TipoMovimientoCaja] = mapped_column(Enum(TipoMovimientoCaja), nullable=False)
     monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     descripcion: Mapped[Optional[str]] = mapped_column(String(200))
-    fecha: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    fecha: Mapped[datetime] = mapped_column(DateTime, default=get_now_chile)
     id_usuario: Mapped[int] = mapped_column(ForeignKey("usuarios.id_usuario"), nullable=False)
 
     sucursal: Mapped["Sucursal"] = relationship(back_populates="movimientos_caja")
