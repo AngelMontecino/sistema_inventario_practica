@@ -51,6 +51,7 @@ def get_dashboard_stats(db: Session, sucursal_id: Optional[int] = None):
     for inv, prod, suc in alertas:
         lista_alertas.append({
             "id_producto": prod.id_producto,
+            "id_inventario": inv.id_inventario,
             "nombre": prod.nombre,
             "cantidad": inv.cantidad,
             "stock_minimo": inv.stock_minimo,

@@ -58,9 +58,7 @@ def obtener_inventario_agrupado(
         resultado = crud.get_inventario_agrupado(db, sucursal_id=target_sucursal, busqueda=busqueda, categoria_id=categoria_id)
         return resultado
     except Exception as e:
-        print(f"DEBUG ERROR: {e}")
-        import traceback
-        traceback.print_exc()
+      
         raise e
 
 @router.get("/{inventario_id}", response_model=schemas.InventarioResponse)

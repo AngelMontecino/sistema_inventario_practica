@@ -5,7 +5,8 @@ from app import models
 
 def create_tables():
     Base.metadata.create_all(bind=engine)
-    print(" Tablas creadas o verificadas")
+    pass
+   
 
 app = FastAPI(title="Sistema de Inventario", on_startup=[create_tables])
 

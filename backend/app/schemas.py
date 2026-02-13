@@ -20,6 +20,7 @@ from app.models import (
 class CategoriaBase(BaseModel):
     nombre: str
     id_padre: Optional[int] = None
+    model_config = ConfigDict(from_attributes=True)
 
 class CategoriaCreate(CategoriaBase):
     pass

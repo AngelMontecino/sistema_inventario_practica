@@ -3,7 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.database import get_db
+from app.database import get_db
 from app.dependencies import get_current_active_user
+from app.core.redis import delete_cache
 
 router = APIRouter(prefix="/documentos", tags=["Documentos (Ventas/Compras)"])
 
@@ -28,14 +30,15 @@ def crear_documento(
     # Asignar usuario autenticado
     try:
         documento.id_usuario = current_user.id_usuario
-        print(f"DEBUG: Intentando crear doc con usuario {documento.id_usuario} sucursal {documento.id_sucursal}")
         resultado = crud.create_documento(db=db, documento=documento)
         if isinstance(resultado, dict) and "error" in resultado:
             raise HTTPException(status_code=400, detail=resultado["error"])
+        
+        # Invalidar caché
+        delete_cache(f"caja:resumen:{documento.id_sucursal}")
         return resultado
     except Exception as e:
         import traceback
-        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error Interno: {str(e)}")
 
 @router.get("/{documento_id}", response_model=schemas.DocumentoResponse)
@@ -61,4 +64,7 @@ def anular_documento(
     db_documento = crud.anular_documento(db, documento_id=documento_id)
     if not db_documento:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    # Invalidar caché
+    delete_cache(f"caja:resumen:{db_documento.id_sucursal}")
     return db_documento

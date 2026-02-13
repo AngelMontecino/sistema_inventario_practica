@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.database import get_db
 from app.dependencies import get_current_active_user
+from app.core.redis import get_cache, set_cache, delete_cache
+import json
+from fastapi.encoders import jsonable_encoder
 
 router = APIRouter(prefix="/caja", tags=["Caja"])
 
@@ -20,6 +23,9 @@ def abrir_caja(
     resultado = crud.abrir_caja(db=db, sucursal_id=current_user.id_sucursal, usuario_id=current_user.id_usuario, monto=monto_inicial)
     if isinstance(resultado, dict) and "error" in resultado:
         raise HTTPException(status_code=400, detail=resultado["error"])
+    
+    # Invalidate cache
+    delete_cache(f"caja:resumen:{current_user.id_sucursal}")
     return resultado
 
 @router.get("/estado", response_model=schemas.EstadoCajaResponse)
@@ -84,6 +90,9 @@ def cerrar_caja(
     )
     if isinstance(resultado, dict) and "error" in resultado:
         raise HTTPException(status_code=400, detail=resultado["error"])
+    
+    # Invalidate cache
+    delete_cache(f"caja:resumen:{current_user.id_sucursal}")
     return resultado
 
 @router.get("/resumen", response_model=schemas.CajaResumenResponse)
@@ -94,7 +103,21 @@ def obtener_resumen(
     """
     Obtiene el resumen actual de la caja desde la última apertura.
     """
-    return crud.obtener_resumen_caja(db=db, sucursal_id=current_user.id_sucursal)
+    cache_key = f"caja:resumen:{current_user.id_sucursal}"
+    cached_data = get_cache(cache_key)
+    
+    if cached_data:
+        pass 
+        return json.loads(cached_data)
+
+    resumen = crud.obtener_resumen_caja(db=db, sucursal_id=current_user.id_sucursal)
+    
+    # Caché del resultado 
+    resumen_schema = schemas.CajaResumenResponse.model_validate(resumen)
+    encoded_data = jsonable_encoder(resumen_schema)
+    set_cache(cache_key, json.dumps(encoded_data), ttl=60) # Caché por 60s
+    
+    return resumen
 
 @router.post("/movimientos", response_model=schemas.MovimientoCajaResponse, status_code=status.HTTP_201_CREATED)
 def registrar_movimiento(
@@ -114,15 +137,18 @@ def registrar_movimiento(
     if movimiento.id_sucursal != current_user.id_sucursal and current_user.rol != models.TipoRol.ADMIN:
         raise HTTPException(status_code=403, detail="No puede registrar movimientos en otra sucursal")
     
-    # Force user ID from token
+    # Forzar ID de usuario desde el token
     movimiento.id_usuario = current_user.id_usuario
-    # Force sucursal if not admin (optional but good practice)
+    # Forzar sucursal si no es admin 
     if current_user.rol != models.TipoRol.ADMIN:
         movimiento.id_sucursal = current_user.id_sucursal
         
     resultado = crud.registrar_movimiento_caja(db=db, movimiento=movimiento)
     if isinstance(resultado, dict) and "error" in resultado:
         raise HTTPException(status_code=400, detail=resultado["error"])
+    
+    # Invalidate cache
+    delete_cache(f"caja:resumen:{current_user.id_sucursal}")
     return resultado
 
 @router.get("/reportes", response_model=List[schemas.ReporteCajaItem])

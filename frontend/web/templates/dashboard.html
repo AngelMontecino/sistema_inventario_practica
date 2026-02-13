@@ -238,7 +238,7 @@ document.addEventListener("DOMContentLoaded", function() {
                             <td class="text-center fw-bold text-danger">{{ alerta.cantidad }}</td>
                             <td class="text-center">{{ alerta.stock_minimo }}</td>
                             <td class="text-end">
-                                <fluent-button appearance="accent" onclick="window.location.href='{% url 'editar_inventario' alerta.id_producto %}'">
+                                <fluent-button appearance="accent" onclick="window.location.href='{% url 'editar_inventario' alerta.id_inventario %}'">
                                     Reponer
                                 </fluent-button>
                             </td>
