@@ -324,8 +324,7 @@ def lista_inventario(request):
     if busqueda:
         params["busqueda"] = busqueda
     if alerta == "true":
-        
-        pass
+        params["alerta_stock"] = "true"
 
     sucursales = []
     categorias = []

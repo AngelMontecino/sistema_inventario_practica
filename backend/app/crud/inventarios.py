@@ -99,7 +99,7 @@ def delete_inventario(db: Session, inventario_id: int):
     db.commit()
     return True
 
-def get_inventario_agrupado(db: Session, sucursal_id: int, busqueda: str = None, categoria_id: int = None, skip: int = 0, limit: int = 100):
+def get_inventario_agrupado(db: Session, sucursal_id: int, busqueda: str = None, categoria_id: int = None, alerta_stock: bool = False, skip: int = 0, limit: int = 100):
   
     query = db.query(
         models.Inventario.id_producto,
@@ -124,6 +124,11 @@ def get_inventario_agrupado(db: Session, sucursal_id: int, busqueda: str = None,
     if categoria_id:
         query = query.filter(models.Producto.id_categoria == categoria_id)
 
+    # Filtro de Alerta Stock
+
+    if alerta_stock:
+        query = query.filter(models.Inventario.cantidad <= models.Inventario.stock_minimo)
+    
    
     count_q = db.query(models.Inventario).join(models.Producto)
     if sucursal_id:
@@ -138,6 +143,9 @@ def get_inventario_agrupado(db: Session, sucursal_id: int, busqueda: str = None,
         )
     if categoria_id:
         count_q = count_q.filter(models.Producto.id_categoria == categoria_id)
+    
+    if alerta_stock:
+        count_q = count_q.filter(models.Inventario.cantidad <= models.Inventario.stock_minimo)
         
     total = count_q.distinct(models.Inventario.id_producto).count()
 

@@ -74,7 +74,7 @@
                 </div>
                 <div>
                     <h5 class="text-muted fw-normal mb-1">Alertas Stock</h5>
-                    <h2 class="text-danger fw-bold mb-0">{{ stats.alertas_stock|length }}</h2>
+                    <h2 class="text-danger fw-bold mb-0">{{ stats.total_alertas }}</h2>
                 </div>
             </div>
         </fluent-card>
@@ -219,8 +219,13 @@ document.addEventListener("DOMContentLoaded", function() {
 <div class="row">
     <div class="col-12">
         <fluent-card class="p-3">
-            <h5 class="mb-3 text-danger d-flex align-items-center">
-                <i class="bx bxs-error-alt me-2"></i> Alertas de Stock Bajo
+            <h5 class="mb-3 text-danger d-flex align-items-center justify-content-between">
+                <span><i class="bx bxs-error-alt me-2"></i> Alertas de Stock Bajo (Top 10)</span>
+                {% if stats.total_alertas > 10 %}
+                    <a href="{% url 'lista_inventario' %}?alerta=true" class="btn btn-sm btn-outline-danger">
+                        Ver todas ({{ stats.total_alertas }})
+                    </a>
+                {% endif %}
             </h5>
             <div class="table-responsive">
                 <table class="table table-hover table-striped mb-0">
@@ -254,7 +259,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">
+                            <td colspan="6" class="text-center py-4 text-muted">
                                 ¡Excelente! No hay productos con stock crítico.
                             </td>
                         </tr>
@@ -262,6 +267,13 @@ document.addEventListener("DOMContentLoaded", function() {
                     </tbody>
                 </table>
             </div>
+            {% if stats.total_alertas > 10 %}
+            <div class="mt-3 text-center border-top pt-2">
+                 <small class="text-muted">Mostrando 10 de {{ stats.total_alertas }} alertas.</small>
+                 <br>
+                 <a href="{% url 'lista_inventario' %}?alerta=true" class="text-decoration-none fw-bold">Ver listado completo <i class='bx bx-right-arrow-alt'></i></a>
+            </div>
+            {% endif %}
         </fluent-card>
     </div>
 </div>

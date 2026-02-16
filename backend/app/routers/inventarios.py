@@ -49,6 +49,7 @@ def obtener_inventario_agrupado(
     sucursal_id: Optional[int] = None,
     busqueda: Optional[str] = None,
     categoria_id: Optional[int] = None,
+    alerta_stock: bool = False,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
@@ -69,6 +70,7 @@ def obtener_inventario_agrupado(
             sucursal_id=target_sucursal, 
             busqueda=busqueda, 
             categoria_id=categoria_id,
+            alerta_stock=alerta_stock,
             skip=skip,
             limit=limit
         )

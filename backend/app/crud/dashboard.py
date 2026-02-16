@@ -34,7 +34,7 @@ def get_dashboard_stats(db: Session, sucursal_id: Optional[int] = None):
     total_productos = q_prods.scalar() or 0
     
     #  Alertas de Stock 
-    q_alertas = db.query(models.Inventario, models.Producto, models.Sucursal)\
+    q_alertas_base = db.query(models.Inventario, models.Producto, models.Sucursal)\
         .join(models.Producto, models.Inventario.id_producto == models.Producto.id_producto)\
         .join(models.Sucursal, models.Inventario.id_sucursal == models.Sucursal.id_sucursal)\
         .filter(
@@ -42,9 +42,14 @@ def get_dashboard_stats(db: Session, sucursal_id: Optional[int] = None):
         )
         
     if sucursal_id:
-        q_alertas = q_alertas.filter(models.Inventario.id_sucursal == sucursal_id)
+        q_alertas_base = q_alertas_base.filter(models.Inventario.id_sucursal == sucursal_id)
         
-    alertas = q_alertas.all()
+    #  Total real 
+    total_alertas = q_alertas_base.count()
+
+    # Limitado para la tabla (Top 10 más criticos)
+ 
+    alertas = q_alertas_base.order_by(models.Inventario.cantidad.asc()).limit(10).all()
         
     # Formatear alertas
     lista_alertas = []
@@ -62,7 +67,8 @@ def get_dashboard_stats(db: Session, sucursal_id: Optional[int] = None):
     return {
         "ventas_dia": int(ventas_dia), 
         "total_productos": total_productos,
-        "alertas_stock": lista_alertas
+        "alertas_stock": lista_alertas,
+        "total_alertas": total_alertas
     }
 
 from datetime import timedelta
