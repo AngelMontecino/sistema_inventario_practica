@@ -19,15 +19,27 @@ def lista_terceros(request):
     busqueda = request.GET.get("q", "")
     filtro_rol = request.GET.get("rol", "") # "cliente" o "proveedor"
 
+    # Paginación
+    page = int(request.GET.get("page", 1))
+    limit = 20 # 20 registros por página
+    skip = (page - 1) * limit
+    
+    total_items = 0
+
     try:
-        params = {}
+        params = {
+            "skip": skip,
+            "limit": limit
+        }
         if busqueda: params["busqueda"] = busqueda
         if filtro_rol: params["rol"] = filtro_rol
         
         response = httpx.get(f"{BACKEND_URL}/terceros/", params=params, headers=headers)
         
         if response.status_code == 200:
-            terceros = response.json()
+            data = response.json()
+            terceros = data.get("items", [])
+            total_items = data.get("total", 0)
         elif response.status_code == 401:
              request.session.flush()
              return redirect("login")
@@ -37,11 +49,21 @@ def lista_terceros(request):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
+    # Calcular páginas
+    import math
+    total_pages = math.ceil(total_items / limit) if limit > 0 else 1
+
     return render(request, "terceros/lista.html", {
         "terceros": terceros, 
         "busqueda": busqueda,
         "filtro_rol": filtro_rol,
-        "error": error
+        "error": error,
+        "page": page,
+        "limit": limit,
+        "total_items": total_items,
+        "total_pages": total_pages,
+        "has_next": page < total_pages,
+        "has_prev": page > 1
     })
 
 @token_required

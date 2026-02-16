@@ -18,7 +18,7 @@
 
 <!-- Filtros -->
 <fluent-card class="mb-4 p-3">
-    <form method="get" class="row g-3 align-items-center" id="filterForm">
+    <form method="get" class="row g-3 align-items-center" id="filterForm" onsubmit="event.preventDefault(); return false;">
         <div class="col-md-5">
             <div class="input-group">
                 <span class="input-group-text bg-white border-end-0"><i class='bx bx-search text-secondary'></i></span>
@@ -94,16 +94,79 @@
     </div>
 </fluent-card>
 
+<!-- Paginación -->
+<div id="paginationContainer" class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 bg-light p-3 rounded-3 shadow-sm">
+    <div class="text-muted small mb-2 mb-md-0 d-flex align-items-center gap-2">
+        <span>Mostrando {{ terceros|length }} de <b>{{ total_items }}</b> registros</span>
+        <span class="text-secondary">|</span>
+        <span>Página <b>{{ page }}</b> de <b>{{ total_pages }}</b></span>
+    </div>
+    
+    <div class="d-flex align-items-center gap-3">
+        <!-- Navegación -->
+        <div class="d-flex gap-2">
+            <fluent-button appearance="outline" 
+                           onclick="changePage(1)"
+                           {% if page == 1 %}disabled{% endif %}
+                           title="Primera Página">
+                <i class='bx bx-chevrons-left'></i>
+            </fluent-button>
+            <fluent-button appearance="outline" 
+                           onclick="changePage({{ page|add:'-1' }})"
+                           {% if not has_prev %}disabled{% endif %}
+                           title="Anterior">
+                <i class='bx bx-chevron-left'></i>
+            </fluent-button>
+            
+            <!-- Ir a página -->
+            <div class="d-flex align-items-center ms-2 me-2">
+               <span class="me-2 text-muted small">Ir a:</span>
+               <input type="number" class="form-control form-control-sm text-center" 
+                      style="width: 60px;" 
+                      value="{{ page }}" 
+                      min="1" 
+                      max="{{ total_pages }}"
+                      onchange="if(this.value >= 1 && this.value <= {{ total_pages }}) changePage(this.value)">
+            </div>
+
+            <fluent-button appearance="outline" 
+                           onclick="changePage({{ page|add:'1' }})"
+                           {% if not has_next %}disabled{% endif %}
+                           title="Siguiente">
+                <i class='bx bx-chevron-right'></i>
+            </fluent-button>
+            <fluent-button appearance="outline" 
+                           onclick="changePage({{ total_pages }})"
+                           {% if page == total_pages %}disabled{% endif %}
+                           title="Última Página">
+                <i class='bx bx-chevrons-right'></i>
+            </fluent-button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function changePage(newPage) {
+        const url = new URL(window.location);
+        url.searchParams.set('page', newPage);
+        window.location.href = url.toString();
+    }
+</script>
+
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const inputBusqueda = document.getElementById("filterBusqueda");
         const radiosRol = document.querySelectorAll('input[name="rol"]');
         const tableBody = document.getElementById("tercerosBody");
+        const paginationContainer = document.getElementById("paginationContainer");
         let timeout = null;
 
         function updateTable() {
             const url = new URL(window.location);
             
+            // Al filtrar, resetear a página 1
+            url.searchParams.set('page', 1);
+
             // Parametro Busqueda
             if (inputBusqueda.value) {
                 url.searchParams.set("q", inputBusqueda.value);
@@ -124,16 +187,23 @@
 
         
             window.history.pushState({}, "", url);
-
+            
         
             fetch(url)
                 .then(response => response.text())
                 .then(html => {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, "text/html");
+                    
                     const newBody = doc.getElementById("tercerosBody");
                     if (newBody && tableBody) {
                         tableBody.innerHTML = newBody.innerHTML;
+                    }
+
+                    // Actualizar Paginación
+                    const newPagination = doc.getElementById('paginationContainer');
+                    if (newPagination && paginationContainer) {
+                        paginationContainer.innerHTML = newPagination.innerHTML;
                     }
                 })
                 .catch(err => console.error("Error filtrando terceros:", err));

@@ -109,9 +109,14 @@ class ClienteProveedorUpdate(BaseModel):
     es_cliente: Optional[bool] = None
     es_proveedor: Optional[bool] = None
 
+
 class ClienteProveedorResponse(ClienteProveedorBase):
     id_tercero: int
     model_config = ConfigDict(from_attributes=True)
+
+class ClienteProveedorPaginatedResponse(BaseModel):
+    total: int
+    items: List[ClienteProveedorResponse]
 
 
 

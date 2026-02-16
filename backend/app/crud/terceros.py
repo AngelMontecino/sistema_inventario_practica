@@ -45,7 +45,12 @@ def get_terceros(
         )
         
     
-    return query.offset(skip).limit(limit).all()
+    # Clonar query para contar total antes de paginar
+    total = query.count()
+    
+    items = query.offset(skip).limit(limit).all()
+    
+    return {"total": total, "items": items}
 
 def create_tercero(db: Session, tercero: schemas.ClienteProveedorCreate):
     db_tercero = models.ClienteProveedor(**tercero.model_dump())

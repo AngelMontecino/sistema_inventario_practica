@@ -20,7 +20,7 @@ def crear_tercero(
     
     return crud.create_tercero(db=db, tercero=tercero)
 
-@router.get("/", response_model=List[schemas.ClienteProveedorResponse])
+@router.get("/", response_model=schemas.ClienteProveedorPaginatedResponse)
 def listar_terceros(
     skip: int = 0, 
     limit: int = 100, 
