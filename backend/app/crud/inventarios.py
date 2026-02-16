@@ -104,8 +104,10 @@ def get_inventario_agrupado(db: Session, sucursal_id: int, busqueda: str = None,
         models.Producto.nombre,
         models.Producto.codigo_barras,
         func.sum(models.Inventario.cantidad).label("total_cantidad")
-    ).join(models.Producto)\
-     .filter(models.Inventario.id_sucursal == sucursal_id)
+    ).join(models.Producto)
+    
+    if sucursal_id:
+        query = query.filter(models.Inventario.id_sucursal == sucursal_id)
 
     if busqueda:
         from sqlalchemy import or_

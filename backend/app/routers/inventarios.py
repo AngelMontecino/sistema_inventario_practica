@@ -54,7 +54,14 @@ def obtener_inventario_agrupado(
     Retorna el stock total agrupado por producto para una sucursal.
     """
     try:
-        target_sucursal = sucursal_id if sucursal_id else current_user.id_sucursal
+        target_sucursal = None
+        if current_user.rol == models.TipoRol.SUPERADMIN:
+            target_sucursal = sucursal_id 
+        elif current_user.rol == models.TipoRol.ADMIN:
+            target_sucursal = sucursal_id if sucursal_id else current_user.id_sucursal
+        else:
+            target_sucursal = current_user.id_sucursal
+
         resultado = crud.get_inventario_agrupado(db, sucursal_id=target_sucursal, busqueda=busqueda, categoria_id=categoria_id)
         return resultado
     except Exception as e:

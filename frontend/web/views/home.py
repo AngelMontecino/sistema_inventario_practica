@@ -43,7 +43,7 @@ def dashboard_view(request):
                  error = "Error al cargar estadísticas"
                  
         # Obtener Sucursales (para el filtro)
-        if request.session.get("rol") == "ADMIN":
+        if request.session.get("rol") in ["ADMIN", "SUPERADMIN"]:
              try:
                  resp_suc = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
                  if resp_suc.status_code == 200:

@@ -323,7 +323,7 @@ def lista_inventario(request):
     
     try:
 
-        if request.session.get("rol") == "ADMIN": 
+        if request.session.get("rol") in ["ADMIN", "SUPERADMIN"]: 
              resp_suc = httpx.get(f"{BACKEND_URL}/sucursales/", headers=headers)
              if resp_suc.status_code == 200:
                  sucursales = resp_suc.json()

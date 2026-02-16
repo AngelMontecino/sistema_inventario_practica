@@ -20,9 +20,11 @@ def get_dashboard_stats(
 ):
     target_sucursal_id = current_user.id_sucursal
     
-    if current_user.rol == models.TipoRol.ADMIN:
-        # Si es Admin, puede filtrar. 
-        target_sucursal_id = sucursal_id
+    if current_user.rol in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
+        if current_user.rol == models.TipoRol.SUPERADMIN:
+            target_sucursal_id = sucursal_id
+        else:
+            target_sucursal_id = sucursal_id if sucursal_id else current_user.id_sucursal
         
     return crud.get_dashboard_stats(db, sucursal_id=target_sucursal_id)
 
@@ -34,8 +36,13 @@ def get_dashboard_charts(
 ):
     target_sucursal_id = current_user.id_sucursal
     
-    if current_user.rol == models.TipoRol.ADMIN:
-        # Si es Admin, puede filtrar. 
-        target_sucursal_id = sucursal_id
+    if current_user.rol in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
+
         
+        if current_user.rol == models.TipoRol.SUPERADMIN:
+            target_sucursal_id = sucursal_id 
+        else:
+            
+            target_sucursal_id = sucursal_id if sucursal_id else current_user.id_sucursal
+
     return crud.get_dashboard_charts(db, sucursal_id=target_sucursal_id)
