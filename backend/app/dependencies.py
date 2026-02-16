@@ -32,3 +32,8 @@ def get_current_active_user(current_user: models.Usuario = Depends(get_current_u
     if not current_user.estado:
         raise HTTPException(status_code=400, detail="Usuario inactivo")
     return current_user
+
+from app.core.redis import redis_service, RedisService
+
+def get_redis() -> RedisService:
+    return redis_service

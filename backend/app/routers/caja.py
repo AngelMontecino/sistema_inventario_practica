@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.database import get_db
-from app.dependencies import get_current_active_user
-from app.core.redis import get_cache, set_cache, delete_cache
+from app.dependencies import get_current_active_user, get_redis
+from app.core.redis import RedisService
 import json
-from fastapi.encoders import jsonable_encoder
 
 router = APIRouter(prefix="/caja", tags=["Caja"])
 
@@ -15,7 +14,8 @@ router = APIRouter(prefix="/caja", tags=["Caja"])
 def abrir_caja(
     monto_inicial: float,
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
     """
     Registra APERTURA de caja para la sucursal del usuario.
@@ -25,7 +25,7 @@ def abrir_caja(
         raise HTTPException(status_code=400, detail=resultado["error"])
     
     # Invalidate cache
-    delete_cache(f"caja:resumen:{current_user.id_sucursal}")
+    redis.delete(f"caja:resumen:{current_user.id_sucursal}")
     return resultado
 
 @router.get("/estado", response_model=schemas.EstadoCajaResponse)
@@ -59,7 +59,8 @@ def consultar_estado_caja(
 def cerrar_caja(
     cierre_data: schemas.CierreCajaRequest,
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
     """
     Registra CIERRE de caja y retorna cuadratura.
@@ -92,30 +93,30 @@ def cerrar_caja(
         raise HTTPException(status_code=400, detail=resultado["error"])
     
     # Invalidate cache
-    delete_cache(f"caja:resumen:{current_user.id_sucursal}")
+    redis.delete(f"caja:resumen:{current_user.id_sucursal}")
     return resultado
 
 @router.get("/resumen", response_model=schemas.CajaResumenResponse)
 def obtener_resumen(
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
     """
     Obtiene el resumen actual de la caja desde la última apertura.
     """
     cache_key = f"caja:resumen:{current_user.id_sucursal}"
-    cached_data = get_cache(cache_key)
+    cached_data = redis.get(cache_key)
     
     if cached_data:
-        pass 
         return json.loads(cached_data)
 
     resumen = crud.obtener_resumen_caja(db=db, sucursal_id=current_user.id_sucursal)
     
     # Caché del resultado 
     resumen_schema = schemas.CajaResumenResponse.model_validate(resumen)
-    encoded_data = jsonable_encoder(resumen_schema)
-    set_cache(cache_key, json.dumps(encoded_data), ttl=60) # Caché por 60s
+    
+    set_success = redis.set(cache_key, resumen_schema.model_dump_json(), ttl=60)
     
     return resumen
 
@@ -123,7 +124,8 @@ def obtener_resumen(
 def registrar_movimiento(
     movimiento: schemas.MovimientoCajaCreate,
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
     """
     Registra un ingreso o egreso manual (NO VENTA/COMPRA).
@@ -148,7 +150,7 @@ def registrar_movimiento(
         raise HTTPException(status_code=400, detail=resultado["error"])
     
     # Invalidate cache
-    delete_cache(f"caja:resumen:{current_user.id_sucursal}")
+    redis.delete(f"caja:resumen:{current_user.id_sucursal}")
     return resultado
 
 @router.get("/reportes", response_model=List[schemas.ReporteCajaItem])

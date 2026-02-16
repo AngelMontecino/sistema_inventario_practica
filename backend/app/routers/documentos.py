@@ -3,9 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.database import get_db
-from app.database import get_db
-from app.dependencies import get_current_active_user
-from app.core.redis import delete_cache
+from app.dependencies import get_current_active_user, get_redis
+from app.core.redis import RedisService
 
 router = APIRouter(prefix="/documentos", tags=["Documentos (Ventas/Compras)"])
 
@@ -13,7 +12,8 @@ router = APIRouter(prefix="/documentos", tags=["Documentos (Ventas/Compras)"])
 def crear_documento(
     documento: schemas.DocumentoCreate, 
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
     """
     Registra una VENTA o COMPRA.
@@ -35,7 +35,7 @@ def crear_documento(
             raise HTTPException(status_code=400, detail=resultado["error"])
         
         # Invalidar caché
-        delete_cache(f"caja:resumen:{documento.id_sucursal}")
+        redis.delete(f"caja:resumen:{documento.id_sucursal}")
         return resultado
     except Exception as e:
         import traceback
@@ -56,7 +56,8 @@ def obtener_documento(
 def anular_documento(
     documento_id: int, 
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
     """
     Anula un documento y revierte los movimientos de stock asociados.
@@ -66,5 +67,5 @@ def anular_documento(
         raise HTTPException(status_code=404, detail="Documento no encontrado")
 
     # Invalidar caché
-    delete_cache(f"caja:resumen:{db_documento.id_sucursal}")
+    redis.delete(f"caja:resumen:{db_documento.id_sucursal}")
     return db_documento

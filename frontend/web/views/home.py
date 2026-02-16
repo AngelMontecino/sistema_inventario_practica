@@ -29,6 +29,9 @@ def dashboard_view(request):
         params = {}
         if sucursal_id is not None:
              params["sucursal_id"] = sucursal_id
+        
+        if request.GET.get("force_refresh") == "true":
+            params["force_refresh"] = "true"
              
         response = httpx.get(f"{BACKEND_URL}/dashboard/stats", params=params, headers=headers)
         if response.status_code == 200:
@@ -73,6 +76,9 @@ def get_charts_data(request):
     params = {}
     if sucursal_id:
         params["sucursal_id"] = sucursal_id
+
+    if request.GET.get("force_refresh") == "true":
+        params["force_refresh"] = "true"
         
     try:
         response = httpx.get(f"{BACKEND_URL}/dashboard/charts", params=params, headers=headers)

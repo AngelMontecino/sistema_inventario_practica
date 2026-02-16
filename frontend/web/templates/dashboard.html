@@ -7,19 +7,24 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Panel de Control</h1>
     
-    {% if request.session.rol in 'ADMIN,SUPERADMIN' and sucursales %}
-    <form method="get" class="d-flex align-items-center">
-        <label class="me-2 text-muted small fw-bold">Ver Sucursal:</label>
-        <select name="sucursal_id" class="form-select form-select-sm w-auto shadow-none border-0 bg-light" onchange="this.form.submit()" style="cursor: pointer;">
-             <option value="" {% if not sucursal_seleccionada %}selected{% endif %}>Global (Todas)</option>
-             {% for suc in sucursales %}
-             <option value="{{ suc.id_sucursal }}" {% if sucursal_seleccionada == suc.id_sucursal %}selected{% endif %}>
-                {{ suc.nombre }}
-             </option>
-             {% endfor %}
-        </select>
-    </form>
-    {% endif %}
+    <div class="d-flex align-items-center">
+        {% if request.session.rol in 'ADMIN,SUPERADMIN' and sucursales %}
+        <form method="get" class="d-flex align-items-center me-2">
+            <label class="me-2 text-muted small fw-bold">Ver Sucursal:</label>
+            <select name="sucursal_id" class="form-select form-select-sm w-auto shadow-none border-0 bg-light" onchange="this.form.submit()" style="cursor: pointer;">
+                 <option value="" {% if not sucursal_seleccionada %}selected{% endif %}>Global (Todas)</option>
+                 {% for suc in sucursales %}
+                 <option value="{{ suc.id_sucursal }}" {% if sucursal_seleccionada == suc.id_sucursal %}selected{% endif %}>
+                    {{ suc.nombre }}
+                 </option>
+                 {% endfor %}
+            </select>
+        </form>
+        {% endif %}
+        <a href="?{% if sucursal_seleccionada %}sucursal_id={{ sucursal_seleccionada }}&{% endif %}force_refresh=true" class="btn btn-sm btn-outline-secondary" title="Actualizar datos ahora">
+            <i class='bx bx-refresh fs-5'></i>
+        </a>
+    </div>
 </div>
 
 {% if error %}
@@ -108,9 +113,13 @@ document.addEventListener("DOMContentLoaded", function() {
     const urlParams = new URLSearchParams(window.location.search);
     const sucursalIdParam = urlParams.get('sucursal_id');
     const sucursalId = sucursalIdParam ? sucursalIdParam : "";
+    const forceRefresh = urlParams.get('force_refresh') === 'true';
     
     // Construir URL correctamente
-    const apiUrl = sucursalId ? `/dashboard/charts?sucursal_id=${sucursalId}` : `/dashboard/charts`;
+    let apiUrl = sucursalId ? `/dashboard/charts/?sucursal_id=${sucursalId}` : `/dashboard/charts/`;
+    if (forceRefresh) {
+        apiUrl += (apiUrl.includes('?') ? '&' : '?') + 'force_refresh=true';
+    }
 
     fetch(apiUrl)
         .then(response => {

@@ -8,7 +8,19 @@ def create_tables():
     pass
    
 
-app = FastAPI(title="Sistema de Inventario", on_startup=[create_tables])
+from contextlib import asynccontextmanager
+from app.core.redis import redis_service
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    redis_service.connect()
+    create_tables()
+    yield
+
+    redis_service.close()
+
+app = FastAPI(title="Sistema de Inventario", lifespan=lifespan)
 
 app.include_router(auth.router)
 app.include_router(sucursales.router)
