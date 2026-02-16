@@ -99,8 +99,8 @@ def delete_inventario(db: Session, inventario_id: int):
     db.commit()
     return True
 
-def get_inventario_agrupado(db: Session, sucursal_id: int, busqueda: str = None, categoria_id: int = None):
-    # Base query
+def get_inventario_agrupado(db: Session, sucursal_id: int, busqueda: str = None, categoria_id: int = None, skip: int = 0, limit: int = 100):
+  
     query = db.query(
         models.Inventario.id_producto,
         models.Producto.id_categoria,
@@ -124,17 +124,39 @@ def get_inventario_agrupado(db: Session, sucursal_id: int, busqueda: str = None,
     if categoria_id:
         query = query.filter(models.Producto.id_categoria == categoria_id)
 
-    # Agrupar por producto y sumar cantidad
-    stats = query.group_by(models.Inventario.id_producto, models.Producto.id_categoria, models.Producto.nombre, models.Producto.codigo_barras)\
-     .all()
+   
+    count_q = db.query(models.Inventario).join(models.Producto)
+    if sucursal_id:
+        count_q = count_q.filter(models.Inventario.id_sucursal == sucursal_id)
+    if busqueda:
+        from sqlalchemy import or_
+        count_q = count_q.filter(
+            or_(
+                models.Producto.nombre.ilike(f"%{busqueda}%"),
+                models.Producto.codigo_barras.ilike(f"%{busqueda}%")
+            )
+        )
+    if categoria_id:
+        count_q = count_q.filter(models.Producto.id_categoria == categoria_id)
+        
+    total = count_q.distinct(models.Inventario.id_producto).count()
+
+    # 3. Apply Pagination to the main query
+    stats = query.group_by(
+        models.Inventario.id_producto, 
+        models.Producto.id_categoria, 
+        models.Producto.nombre, 
+        models.Producto.codigo_barras
+    ).offset(skip).limit(limit).all()
     
-    # Formatear
-    resultado = []
+
+    items = []
     for row in stats:
-        resultado.append({
+        items.append({
             "id_producto": row.id_producto,
             "nombre": row.nombre,
             "codigo_barras": row.codigo_barras,
             "total_cantidad": row.total_cantidad
         })
-    return resultado
+        
+    return {"total": total, "items": items}

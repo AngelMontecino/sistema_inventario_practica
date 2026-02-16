@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
 from app.database import get_db
-from app.dependencies import get_current_active_user
+from app.dependencies import get_current_active_user, get_redis
+from app.core.redis import RedisService
+import json
+from fastapi.encoders import jsonable_encoder
+
+CACHE_KEY_PRODUCTOS = "maestro:productos:lista"
 
 router = APIRouter(prefix="/productos", tags=["Productos y Categorías"])
 
@@ -18,7 +23,7 @@ def crear_categoria(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     return crud.create_categoria(db=db, categoria=categoria)
 
@@ -48,7 +53,7 @@ def eliminar_categoria(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     resultado = crud.delete_categoria(db, categoria_id=categoria_id)
     if resultado is None:
@@ -65,9 +70,10 @@ def eliminar_categoria(
 def crear_producto(
     producto: schemas.ProductoCreate, 
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     # Validar código de barras único
     if producto.codigo_barras:
@@ -75,7 +81,12 @@ def crear_producto(
         if existe:
             raise HTTPException(status_code=400, detail="El código de barras ya existe")
             
-    return crud.create_producto(db=db, producto=producto)
+    nuevo_producto = crud.create_producto(db=db, producto=producto)
+    
+    # Invalidate cache
+    redis.delete(CACHE_KEY_PRODUCTOS)
+    
+    return nuevo_producto
 
 @router.get("/", response_model=schemas.ProductoPaginatedResponse)
 def listar_productos(
@@ -87,9 +98,29 @@ def listar_productos(
     precio_min: Optional[float] = None,
     precio_max: Optional[float] = None,
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
-    return crud.get_productos(
+    # Cache 
+    is_default = (
+        skip == 0 and 
+        limit == 100 and 
+        not busqueda and 
+        not id_categoria and 
+        not unidad_medida and 
+        not precio_min and 
+        not precio_max
+    )
+
+    if is_default:
+        try:
+            cached = redis.get(CACHE_KEY_PRODUCTOS)
+            if cached:
+                return json.loads(cached)
+        except Exception as e:
+            print(f"Redis Error (Get): {e}")
+
+    productos = crud.get_productos(
         db, 
         skip=skip, 
         limit=limit, 
@@ -99,6 +130,14 @@ def listar_productos(
         precio_min=precio_min,
         precio_max=precio_max
     )
+    
+    if is_default:
+        try:
+            redis.set(CACHE_KEY_PRODUCTOS, json.dumps(jsonable_encoder(productos)), ttl=3600)
+        except Exception as e:
+            print(f"Redis Error (Set): {e}")
+            
+    return productos
 
 @router.get("/{producto_id}", response_model=schemas.ProductoResponse)
 def obtener_producto(producto_id: int, db: Session = Depends(get_db), current_user: models.Usuario = Depends(get_current_active_user)):
@@ -112,22 +151,28 @@ def actualizar_producto(
     producto_id: int, 
     producto_update: schemas.ProductoUpdate, 
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     db_producto = crud.update_producto(db, producto_id=producto_id, producto_update=producto_update)
     if db_producto is None:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
+    
+    # Invalidate cache
+    redis.delete(CACHE_KEY_PRODUCTOS)
+        
     return db_producto
 
 @router.delete("/{producto_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_producto(
     producto_id: int, 
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
         
     resultado = crud.delete_producto(db, producto_id=producto_id)
@@ -138,4 +183,7 @@ def eliminar_producto(
     if resultado == "ConStock":
          raise HTTPException(status_code=400, detail="No se puede eliminar: El producto tiene stock físico > 0")
          
+    # Invalidate cache
+    redis.delete(CACHE_KEY_PRODUCTOS)
+
     return None

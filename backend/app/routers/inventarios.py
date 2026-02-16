@@ -42,8 +42,10 @@ def consultar_inventario(
     """
     return crud.get_inventarios(db, skip=skip, limit=limit, sucursal_id=sucursal_id, producto_id=producto_id, alerta_stock=alerta_stock, categoria_id=categoria_id)
 
-@router.get("/agrupado", response_model=List[schemas.InventarioAgrupadoResponse])
+@router.get("/agrupado", response_model=schemas.InventarioPaginatedResponse)
 def obtener_inventario_agrupado(
+    skip: int = 0,
+    limit: int = 100,
     sucursal_id: Optional[int] = None,
     busqueda: Optional[str] = None,
     categoria_id: Optional[int] = None,
@@ -62,7 +64,14 @@ def obtener_inventario_agrupado(
         else:
             target_sucursal = current_user.id_sucursal
 
-        resultado = crud.get_inventario_agrupado(db, sucursal_id=target_sucursal, busqueda=busqueda, categoria_id=categoria_id)
+        resultado = crud.get_inventario_agrupado(
+            db, 
+            sucursal_id=target_sucursal, 
+            busqueda=busqueda, 
+            categoria_id=categoria_id,
+            skip=skip,
+            limit=limit
+        )
         return resultado
     except Exception as e:
       

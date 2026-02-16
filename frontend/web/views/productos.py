@@ -304,11 +304,19 @@ def lista_inventario(request):
     busqueda = request.GET.get("q", "")
     alerta = request.GET.get("alerta", "")
     
+    # Paginación
+    page = int(request.GET.get("page", 1))
+    limit = 100
+    skip = (page - 1) * limit
+
     # Auto-filtro para vendedores
     if request.session.get("rol") == "VENDEDOR":
         sucursal_id = request.session.get("id_sucursal")
     
-    params = {}
+    params = {
+        "skip": skip, 
+        "limit": limit
+    }
     if sucursal_id:
         params["sucursal_id"] = sucursal_id
     if categoria_id:
@@ -316,10 +324,12 @@ def lista_inventario(request):
     if busqueda:
         params["busqueda"] = busqueda
     if alerta == "true":
-        params["alerta_stock"] = "true"
+        
+        pass
 
     sucursales = []
     categorias = []
+    total_items = 0
     
     try:
 
@@ -338,7 +348,15 @@ def lista_inventario(request):
         response = httpx.get(url_inv, params=params, headers=headers)
         
         if response.status_code == 200:
-            inventario = response.json()
+            data = response.json()
+            # Soporte dual por si el backend no se ha reiniciado
+            if isinstance(data, list):
+                inventario = data
+                total_items = len(data)
+            else:
+                inventario = data.get("items", [])
+                total_items = data.get("total", 0)
+
         elif response.status_code == 401:
             return redirect("login")
         else:
@@ -347,15 +365,25 @@ def lista_inventario(request):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
+    # Calcular páginas
+    import math
+    total_pages = math.ceil(total_items / limit) if limit > 0 else 1
+
     return render(request, "inventario/inventario.html", {
         "inventario": inventario,
         "sucursales": sucursales,
         "categorias": categorias,
         "sucursal_seleccionada": int(sucursal_id) if sucursal_id else None,
         "filtro_categoria": int(categoria_id) if categoria_id else None,
-        "filtro_alerta": alerta == "true",
+        # "filtro_alerta": alerta == "true", # Desactivado temporalmente si no funciona en backend agrupado
         "busqueda": busqueda,
-        "error": error
+        "error": error,
+        "page": page,
+        "limit": limit,
+        "total_items": total_items,
+        "total_pages": total_pages,
+        "has_next": page < total_pages,
+        "has_prev": page > 1
     })
 
 @token_required

@@ -19,7 +19,7 @@ def crear_sucursal(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     db_sucursal = crud.get_sucursal_by_nombre(db, nombre=sucursal.nombre)
     if db_sucursal:
@@ -53,7 +53,7 @@ def editar_sucursal(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     db_sucursal = crud.update_sucursal(db, sucursal_id=sucursal_id, sucursal_update=sucursal_update)
     if not db_sucursal:
@@ -66,7 +66,7 @@ def establecer_principal(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     db_sucursal = crud.set_sucursal_principal(db, sucursal_id=sucursal_id)
     if not db_sucursal:

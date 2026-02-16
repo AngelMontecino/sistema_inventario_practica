@@ -198,6 +198,10 @@ class InventarioAgrupadoResponse(BaseModel):
     codigo_barras: Optional[str] = None
     total_cantidad: int
 
+class InventarioPaginatedResponse(BaseModel):
+    total: int
+    items: List[InventarioAgrupadoResponse]
+
 
 # DETALLE DOCUMENTO SCHEMAS
 
