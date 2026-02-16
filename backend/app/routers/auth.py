@@ -1,13 +1,15 @@
 from datetime import timedelta
 from typing import List, Optional
-
+import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas, security
 from app.database import get_db
-from app.dependencies import get_current_active_user
+from app.dependencies import get_current_active_user, get_redis
+from app.core.redis import RedisService
 
 router = APIRouter(tags=["Administración"])
 
@@ -53,7 +55,8 @@ def iniciar_sesion(form_data: OAuth2PasswordRequestForm = Depends(), db: Session
 def crear_usuario(
     usuario: schemas.UsuarioCreate, 
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
     # Validar permisos de creación
     if current_user.rol == models.TipoRol.SUPERADMIN:
@@ -70,7 +73,13 @@ def crear_usuario(
     db_usuario = crud.get_usuario_by_email(db, email=usuario.email)
     if db_usuario:
         raise HTTPException(status_code=400, detail="El email ya está registrado")
-    return crud.create_usuario(db=db, usuario=usuario)
+    
+    nuevo_usuario = crud.create_usuario(db=db, usuario=usuario)
+    
+    # Invalidate cache
+    redis.delete_pattern("usuarios:*")
+    
+    return nuevo_usuario
 
 @router.get("/usuarios/", response_model=List[schemas.UsuarioResponse])
 def listar_usuarios(
@@ -78,17 +87,27 @@ def listar_usuarios(
     limit: int = 100, 
     id_sucursal: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
+    cache_key = f"usuarios:list:{skip}:{limit}:{id_sucursal if id_sucursal else 'all'}"
+    cached_data = redis.get(cache_key)
+    if cached_data:
+        return json.loads(cached_data)
 
-    return crud.get_usuarios(db, skip=skip, limit=limit, id_sucursal=id_sucursal)
+    usuarios = crud.get_usuarios(db, skip=skip, limit=limit, id_sucursal=id_sucursal)
+    
+    redis.set(cache_key, json.dumps(jsonable_encoder(usuarios)), ttl=300)
+    
+    return usuarios
 
 @router.put("/usuarios/{usuario_id}", response_model=schemas.UsuarioResponse)
 def actualizar_usuario(
     usuario_id: int,
     usuario_update: schemas.UsuarioUpdate,
     db: Session = Depends(get_db),
-    current_user: models.Usuario = Depends(get_current_active_user)
+    current_user: models.Usuario = Depends(get_current_active_user),
+    redis: RedisService = Depends(get_redis)
 ):
     # Lógica de permisos (RBAC)
     
@@ -130,5 +149,8 @@ def actualizar_usuario(
     db_usuario = crud.update_usuario(db, usuario_id=usuario_id, usuario_update=usuario_update)
     if not db_usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # Invalidate cache
+    redis.delete_pattern("usuarios:*")
     
     return db_usuario
