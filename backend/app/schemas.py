@@ -189,6 +189,7 @@ class InventarioResponse(InventarioBase):
     id_sucursal: int
     id_producto: int
     producto: Optional[ProductoResponse] = None # Para mostrar info del producto en listados
+    sucursal: Optional["SucursalResponse"] = None # Para mostrar info de la sucursal
     model_config = ConfigDict(from_attributes=True)
 
 class InventarioAgrupadoResponse(BaseModel):

@@ -25,7 +25,10 @@ def get_inventarios(
     alerta_stock: bool = False,
     categoria_id: int = None
 ):
-    query = db.query(models.Inventario).join(models.Inventario.producto).options(joinedload(models.Inventario.producto))
+    query = db.query(models.Inventario).join(models.Inventario.producto).options(
+        joinedload(models.Inventario.producto),
+        joinedload(models.Inventario.sucursal)
+    )
     
     if sucursal_id:
         query = query.filter(models.Inventario.id_sucursal == sucursal_id)

@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row align-items-center mb-4">
     <div class="col-md-8">
-        <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_inventario' %}'">
+        <fluent-button appearance="outline" onclick="window.location.href='{% url 'lista_inventario' %}{% if sucursal_seleccionada %}?sucursal_id={{ sucursal_seleccionada }}{% endif %}'">
             <i class='bx bx-arrow-back me-1'></i> Volver al Inventario Global
         </fluent-button>
         <h1 class="h3 fw-bold mb-0 text-gray-800">
@@ -51,7 +51,7 @@
                     <td class="px-4 fw-bold text-muted">#{{ item.id_inventario }}</td>
                     <td>
                         <span class="badge bg-white text-dark border rounded-pill fw-normal px-3 py-2 shadow-sm">
-                            <i class='bx bx-store-alt me-1 text-primary'></i> ID: {{ item.id_sucursal }}
+                            <i class='bx bx-store-alt me-1 text-primary'></i> {{ item.sucursal.nombre }}
                         </span>
                     </td>
                     <td>

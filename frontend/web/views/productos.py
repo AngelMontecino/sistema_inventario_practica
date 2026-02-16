@@ -351,7 +351,7 @@ def lista_inventario(request):
         "inventario": inventario,
         "sucursales": sucursales,
         "categorias": categorias,
-        "filtro_sucursal": int(sucursal_id) if sucursal_id else None,
+        "sucursal_seleccionada": int(sucursal_id) if sucursal_id else None,
         "filtro_categoria": int(categoria_id) if categoria_id else None,
         "filtro_alerta": alerta == "true",
         "busqueda": busqueda,
@@ -390,7 +390,7 @@ def detalle_inventario(request, pk):
     except httpx.RequestError as exc:
         error = f"Error de conexión: {exc}"
 
-    return render(request, "inventario/detalle_inventario.html", {"detalles": detalles, "producto": producto, "error": error})
+    return render(request, "inventario/detalle_inventario.html", {"detalles": detalles, "producto": producto, "sucursal_seleccionada": sucursal_seleccionada, "error": error})
 
 @token_required
 def editar_inventario(request, pk):
