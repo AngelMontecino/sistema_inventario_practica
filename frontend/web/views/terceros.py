@@ -183,6 +183,9 @@ def api_buscar_terceros(request):
         params = {"busqueda": q}
         response = httpx.get(f"{BACKEND_URL}/terceros/", params=params, headers=headers)
         data = response.json()
+      
+        if isinstance(data, dict) and "items" in data:
+            return JsonResponse(data["items"], safe=False)
         return JsonResponse(data, safe=False)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
