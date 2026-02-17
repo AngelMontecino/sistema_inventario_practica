@@ -57,12 +57,18 @@ Crea el archivo `backend/.env` con el siguiente contenido:
 DB_USER=angel
 DB_PASSWORD=tu_password
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=<PUERTO_DB>
 DB_NAME=sistema_inventario
 
 # Seguridad
 SECRET_KEY=tu_secret_key_segura_para_production
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Redis Cache
+REDIS_HOST=localhost
+REDIS_PORT=puerto_redis
+REDIS_DB=0
+# REDIS_PASSWORD=tu_password 
 ```
 
 #### Frontend (`frontend/.env`)
@@ -73,7 +79,10 @@ DJANGO_SECRET_KEY=tu_django_secret_key_segura
 DEBUG=True
 
 # Backend 
-BACKEND_URL=http://127.0.0.1:8001
+BACKEND_URL=http://127.0.0.1:<PUERTO_BACKEND>
+
+# Redis (Sesiones)
+REDIS_LOCATION=redis://127.0.0.1:<PUERTO_REDIS>/1
 ```
 
 ### 3. Ejecutar el Proyecto
@@ -81,15 +90,15 @@ BACKEND_URL=http://127.0.0.1:8001
 #### Backend (API)
 En la terminal del backend:
 ```bash
-# Puerto 8001
-fastapi dev app/main.py --port 8001
+# Puerto Backend
+fastapi dev app/main.py --port <PUERTO_BACKEND>
 ```
 
 #### Frontend (Web App)
 En la terminal del frontend:
 ```bash
-# Puerto 8002
-python manage.py runserver 8002
+# Puerto Frontend
+python manage.py runserver <PUERTO_FRONTEND>
 ```
 
 
@@ -116,8 +125,8 @@ sistema_inventario/
 
 ##  Documentación API
 Una vez corriendo el backend, visita:
-*   [http://127.0.0.1:8001/docs](http://127.0.0.1:8001/docs)
+*   [http://127.0.0.1:<PUERTO_BACKEND>/docs](http://127.0.0.1:<PUERTO_BACKEND>/docs)
 
 ##  Acceso Web
 Una vez corriendo el frontend, visita:
-*   [http://127.0.0.1:8002/](http://127.0.0.1:8002/)
+*   [http://127.0.0.1:<PUERTO_FRONTEND>/](http://127.0.0.1:<PUERTO_FRONTEND>/)
