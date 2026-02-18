@@ -172,3 +172,66 @@ def obtener_detalle_sesion(
              raise HTTPException(status_code=403, detail="No tiene permiso para ver esta caja")
              
     return detalle
+
+#  BORRADORES 
+from app.core.redis import redis_service
+from typing import Dict, Any
+
+@router.post("/borrador", status_code=status.HTTP_200_OK)
+def guardar_borrador(
+    borrador: Dict[str, Any],
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    """
+    Guarda un borrador de venta en Redis para el usuario y sucursal actual.
+    24 horas
+    """
+    if not redis_service.client:
+        raise HTTPException(status_code=503, detail="Servicio de caché no disponible")
+
+    key = f"draft:{current_user.id_sucursal}:{current_user.id_usuario}"
+    
+   
+    import json
+    try:
+        json_data = json.dumps(borrador)
+        redis_service.set(key, json_data, ttl=86400) # 24 horas
+        return {"mensaje": "Borrador guardado correctamente"}
+    except Exception as e:
+         raise HTTPException(status_code=500, detail=f"Error guardando borrador: {str(e)}")
+
+@router.get("/borrador", response_model=Dict[str, Any])
+def obtener_borrador(
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    """
+    Recupera el borrador activo del usuario.
+    """
+    if not redis_service.client:
+        raise HTTPException(status_code=503, detail="Servicio de caché no disponible")
+
+    key = f"draft:{current_user.id_sucursal}:{current_user.id_usuario}"
+    data = redis_service.get(key)
+    
+    if not data:
+        return {} # Retorna vacio si no hay borrador
+
+    import json
+    try:
+        return json.loads(data)
+    except:
+         return {}
+
+@router.delete("/borrador", status_code=status.HTTP_200_OK)
+def eliminar_borrador(
+    current_user: models.Usuario = Depends(get_current_active_user)
+):
+    """
+    Elimina el borrador del usuario.
+    """
+    if not redis_service.client:
+        raise HTTPException(status_code=503, detail="Servicio de caché no disponible")
+
+    key = f"draft:{current_user.id_sucursal}:{current_user.id_usuario}"
+    redis_service.delete(key)
+    return {"mensaje": "Borrador eliminado"}

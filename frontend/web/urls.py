@@ -33,6 +33,7 @@ urlpatterns = [
     path('sucursales/editar/<int:pk>', views.editar_sucursal, name='editar_sucursal'),
     
     # Usuarios
+    path("api/borrador/", views.api_borrador, name="api_borrador"),
     path('usuarios/', views.lista_usuarios, name='lista_usuarios'),
     path('usuarios/nuevo', views.crear_usuario, name='crear_usuario'),
     path('usuarios/editar/<int:pk>', views.editar_usuario, name='editar_usuario'),

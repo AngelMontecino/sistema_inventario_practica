@@ -45,7 +45,9 @@ def crear_documento(request):
         # Cargar todos los terceros para el select
         resp = httpx.get(f"{BACKEND_URL}/terceros/", headers=headers)
         if resp.status_code == 200:
-            terceros = resp.json()
+            data = resp.json()
+            # Backend return {total, items}
+            terceros = data.get("items", []) if isinstance(data, dict) and "items" in data else data
             
         # Verificar Estado Caja 
         resp_caja = httpx.get(f"{BACKEND_URL}/caja/estado", headers=headers)
@@ -71,8 +73,13 @@ def api_buscar_productos(request):
     try:
         response = httpx.get(f"{BACKEND_URL}/productos/", params={"busqueda": q}, headers=headers)
         data = response.json()
+        data = response.json()
         # La API ahora retorna paginación (total, items)
-        items = data.get("items", []) if isinstance(data, dict) and "items" in data else data
+        if isinstance(data, dict) and "items" in data:
+            items = data["items"]
+        else:
+            items = data if isinstance(data, list) else []
+            
         return JsonResponse(items, safe=False)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
@@ -97,5 +104,32 @@ def api_ver_stock(request):
                 cantidad += item.get("cantidad", 0) 
         
         return JsonResponse({"stock": cantidad})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+@token_required
+def api_borrador(request):
+    """Proxy para gestionar borradores (GET, POST, DELETE)"""
+    token = request.session.get("access_token")
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    try:
+        if request.method == "POST":
+            # Guardar
+            data = json.loads(request.body)
+            response = httpx.post(f"{BACKEND_URL}/caja/borrador", json=data, headers=headers)
+            return JsonResponse(response.json(), status=response.status_code)
+            
+        elif request.method == "DELETE":
+            # Borrar
+            response = httpx.delete(f"{BACKEND_URL}/caja/borrador", headers=headers)
+            return JsonResponse(response.json(), status=response.status_code)
+            
+        else: # GET
+            # Leer
+            response = httpx.get(f"{BACKEND_URL}/caja/borrador", headers=headers)
+            data = response.json()
+            return JsonResponse(data, safe=False)
+            
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)

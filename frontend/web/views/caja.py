@@ -91,7 +91,16 @@ def cerrar_caja(request):
                     if dt.tzinfo is None:
                         dt = dt.replace(tzinfo=timezone.utc)
                     doc["fecha_emision"] = dt
-            
+                
+                # Convertir detalles a numericos para evitar error en template
+                for det in doc.get("detalles", []):
+                    try:
+                        det["cantidad"] = float(det.get("cantidad", 0))
+                        det["precio_unitario"] = float(det.get("precio_unitario", 0))
+                        det["descuento"] = float(det.get("descuento", 0))
+                    except (ValueError, TypeError):
+                        pass
+
             for mov in resumen.get("movimientos_extra", []):
                 if mov.get("fecha"):
                     dt = datetime.fromisoformat(mov["fecha"])
@@ -123,6 +132,15 @@ def cerrar_caja(request):
                         if dt.tzinfo is None:
                             dt = dt.replace(tzinfo=timezone.utc)
                         doc["fecha_emision"] = dt
+                    
+                    # Convertir detalles a numericos
+                    for det in doc.get("detalles", []):
+                        try:
+                            det["cantidad"] = float(det.get("cantidad", 0))
+                            det["precio_unitario"] = float(det.get("precio_unitario", 0))
+                            det["descuento"] = float(det.get("descuento", 0))
+                        except (ValueError, TypeError):
+                            pass
 
                 for mov in resultado.get("movimientos_extra", []):
                     if mov.get("fecha"):

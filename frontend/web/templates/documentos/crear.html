@@ -15,6 +15,7 @@
         background-color: #f8f9fa;
         cursor: pointer;
     }
+
 </style>
 
 {% if estado_caja and estado_caja.estado != 'ABIERTA' %}
@@ -201,7 +202,13 @@
             </table>
         </div>
         
-        <div class="text-end pt-4 border-top">
+        <div class="text-end pt-4 border-top d-flex justify-content-between align-items-center">
+             <div class="d-flex align-items-center">
+                <button type="button" class="btn btn-outline-danger" id="btnDropDraft" title="Eliminar borrador y limpiar formulario">
+                    <i class='bx bx-trash me-2'></i> Eliminar Documento
+                </button>
+                <span id="draftStatus" class="ms-3 text-muted small fst-italic"></span>
+             </div>
              <fluent-button appearance="accent" class="px-5" id="btnSaveDocument" style="min-width: 200px;">
                 <i class='bx bx-save me-2'></i> Guardar Documento
              </fluent-button>
@@ -215,6 +222,74 @@
         let currentProduct = null;
         let currentBasePrice = 0; 
         const sucursalId = "{{ sucursal_id }}";
+
+        // autoguardado
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        
+        
+        function showStatus(msg) {
+            const el = document.getElementById("draftStatus");
+            if(el) {
+                el.innerHTML = `<i class='bx bx-check-circle'></i> ${msg}`;
+               
+                el.style.opacity = 1;
+                setTimeout(() => {
+                    el.style.opacity = 0.5; 
+                }, 2000);
+            }
+        }
+
+        function saveDraftData(silent = true) {
+            
+             if (detalles.length === 0 && !document.getElementById("tercero").value) {
+                
+                 fetch("{% url 'api_borrador' %}", { method: "DELETE", headers: {"X-CSRFToken": "{{ csrf_token }}"} })
+                 .then(res => res.json())
+                 .then(data => {
+                     if(!silent && data.mensaje) showStatus("Borrador eliminado (vacío)");
+                 })
+                 .catch(err => console.error(err));
+                 return;
+             }
+
+            const draftData = {
+                tipo_operacion: document.getElementById("tipoOperacion").value,
+                tipo_documento: document.getElementById("tipoDocumento").value,
+                tercero: {
+                    id: document.getElementById("tercero").value,
+                    nombre: document.getElementById("searchTercero").value
+                },
+                observaciones: document.getElementById("observaciones").value,
+                detalles: detalles
+            };
+
+            fetch("{% url 'api_borrador' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify(draftData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.mensaje) {
+                    if(!silent) alert(data.mensaje);
+                    else showStatus("Borrador guardado");
+                }
+            })
+            .catch(err => console.error("Auto-save error:", err));
+        }
+
+        const autoSaveDraft = debounce(() => saveDraftData(true), 2000);
+
 
         // Elements
         const searchInput = document.getElementById("searchProduct");
@@ -239,7 +314,7 @@
             stockDisplay.textContent = "?";
             stockDisplay.classList.remove("text-danger");
             document.getElementById("lineUbicacion").innerHTML = "";
-            document.getElementById("divUbicacion").style.display = "block"; 
+            document.getElementById("divUbicacion").style.display = "block";   
              document.getElementById("lineUbicacion").innerHTML = ""; 
             
             searchInput.focus();
@@ -260,7 +335,7 @@
                     .then(res => res.json())
                     .then(data => {
                         resultsList.innerHTML = "";
-                        if (data.length > 0) {
+                        if (data && data.length > 0) {
                             resultsList.style.display = 'block';
                             data.forEach(prod => {
                                 const li = document.createElement("li");
@@ -332,6 +407,7 @@
             searchTerceroInput.value = `${t.nombre} (${t.rut})`;
             terceroResults.style.display = 'none';
             btnClearTercero.style.display = 'block';
+            autoSaveDraft();
         }
 
         btnClearTercero.addEventListener("click", function() {
@@ -340,6 +416,7 @@
             terceroResults.style.display = 'none';
             this.style.display = 'none';
             searchTerceroInput.focus();
+            autoSaveDraft(); // Trigger auto-save when clearing third party
         });
 
         // Cerrar listas al hacer click fuera
@@ -583,6 +660,7 @@
             document.getElementById("totalGeneral").textContent = "$" + totalGen.toLocaleString("es-CL");
             document.getElementById("totalNeto").textContent = "$" + totalNeto.toLocaleString("es-CL");
             document.getElementById("totalIva").textContent = "$" + totalIva.toLocaleString("es-CL");
+            autoSaveDraft();
         }
 
         // --- Guardar Documento ---
@@ -638,6 +716,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status === "success") {
+                    fetch("{% url 'api_borrador' %}", { method: "DELETE", headers: {"X-CSRFToken": "{{ csrf_token }}"} });
                     alert("Documento creado exitosamente!");
                     window.location.href = data.redirect_url;
                 } else {
@@ -646,6 +725,109 @@
             })
             .catch(err => alert("Error de comunicación: " + err));
         });
+
+        // LISTENERS autguardado
+        // Inputs de cabecera que deben guardar cambios
+        const inputsToWatch = [
+            document.getElementById("tipoOperacion"), 
+            document.getElementById("tipoDocumento"), 
+            document.getElementById("observaciones"),
+            
+        ];
+        inputsToWatch.forEach(el => {
+            if(el) {
+                el.addEventListener("change", autoSaveDraft);
+                el.addEventListener("input", autoSaveDraft);
+            }
+        });
+        
+    
+        
+        
+        function loadDraftData(silent = false) {
+             fetch("{% url 'api_borrador' %}")
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || Object.keys(data).length === 0) {
+                        if (!silent) alert("No hay borrador guardado.");
+                        return;
+                    }
+
+                    if (!silent && detalles.length > 0) {
+                        if(!confirm("Esto sobrescribirá la venta actual. ¿Continuar?")) return;
+                    }
+
+                    // Restore
+                    if (data.tipo_operacion) {
+                        document.getElementById("tipoOperacion").value = data.tipo_operacion;
+                      
+                        document.getElementById("tipoOperacion").dispatchEvent(new Event('change'));
+                    }
+                    if (data.tipo_documento) document.getElementById("tipoDocumento").value = data.tipo_documento;
+                    if (data.observaciones) document.getElementById("observaciones").value = data.observaciones;
+                    
+                    if (data.tercero && data.tercero.id) {
+                        terceroHidden.value = data.tercero.id;
+                        searchTerceroInput.value = data.tercero.nombre;
+                        btnClearTercero.style.display = 'block';
+                    }
+
+                    if (data.detalles && Array.isArray(data.detalles)) {
+                        detalles = data.detalles;
+                        
+                        renderTable(); 
+                    }
+                    
+                    if (!silent) alert("Borrador cargado.");
+                    else {
+                        showStatus("Borrador restaurado");
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        // limpiar documento
+        document.getElementById("btnDropDraft").addEventListener("click", function() {
+            if(!confirm("¿Está seguro de eliminar todo el documento y volver a empezar? Esta acción no se puede deshacer.")) return;
+
+            //  Limpiar Variables
+            detalles = [];
+            currentProduct = null;
+            
+            //  Limpiar UI 
+            document.getElementById("tipoOperacion").value = "VENTA";
+            document.getElementById("tipoDocumento").value = "BOLETA";
+            document.getElementById("folio").value = "";
+            document.getElementById("observaciones").value = "";
+            
+            terceroHidden.value = "";
+            searchTerceroInput.value = "";
+            btnClearTercero.style.display = 'none';
+
+            //  Limpiar Inputs Linea
+            searchInput.value = "";
+            priceInput.value = "";
+            qtyInput.value = 1;
+            descInput.value = 0;
+            subtotalInput.value = "";
+            stockDisplay.textContent = "?";
+            document.getElementById("lineUbicacion").innerHTML = "";
+            
+            
+            renderTable();
+
+            //  eliminar del Backend
+            fetch("{% url 'api_borrador' %}", { method: "DELETE", headers: {"X-CSRFToken": "{{ csrf_token }}"} })
+            .then(res => res.json())
+            .then(() => {
+                const el = document.getElementById("draftStatus");
+                if(el) el.innerHTML = ""; // Clear status
+            })
+            .catch(err => console.error(err));
+        });
+
+        // auguardado start
+        setTimeout(() => loadDraftData(true), 500); 
     });
 </script>
 {% endif %}
