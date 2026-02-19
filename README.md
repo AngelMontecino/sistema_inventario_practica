@@ -1,132 +1,102 @@
-# Sistema de Inventario (Full Stack)
+# Sistema de Inventario y POS
 
-Sistema de gestión de inventarios con Backend en FastAPI y Frontend en Django.
+Sistema de gestión de inventario y punto de venta web, desarrollado con FastAPI (Backend) y Django (Frontend).
 
-## Tecnologías
+##  Requisitos Previos
 
-### Backend
+- [Docker](https://www.docker.com/get-started) y [Docker Compose](https://docs.docker.com/compose/install/) instalados.
 
-*   [FastAPI](https://fastapi.tiangolo.com/): Framework  para APIs.
-*   [SQLAlchemy 2.0](https://www.sqlalchemy.org/): ORM para bases de datos.
-*   [Pydantic V2](https://docs.pydantic.dev/): Validación de datos.
-*   [PostgreSQL](https://www.postgresql.org/): Base de datos relacional.
-*   [Passlib[bcrypt]](https://passlib.readthedocs.io/): Hashing de contraseñas.
-*   [Python-Jose](https://python-jose.readthedocs.io/): Generación de tokens JWT.
-### Frontend
-*   **Django**: Framework Web (actuando como cliente).
-*   **Bootstrap 5**: Diseño.
-*   **Httpx**: Cliente HTTP para consumir la API.
+## Configuración e Instalación
 
----
+### 1. Clonar el repositorio
 
-## Instalación y Configuración
-
-El proyecto funciona como un monorepo con dos carpetas principales: `backend` y `frontend`.
-
-### 1. Clonar y Entorno Virtual
 ```bash
-git clone <url-del-repo>
-cd sistema_inventario
+git clone <url-del-repositorio>
+cd sistema_inventario_backend
 ```
 
-#### Para el Backend:
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+### 2. Configurar Variables de Entorno (.env)
 
-#### Para el Frontend:
-Abrir una **nueva terminal**:
-```bash
-cd frontend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+Crea un archivo llamado `.env` en la raíz del proyecto (al mismo nivel que `docker-compose.yml`) y copia el siguiente contenido. Estas variables configuran tanto el backend, frontend como los servicios de base de datos y caché.
 
-### 2. Configuración de Variables de Entorno (.env)
-
-Es necesario crear un archivo `.env` en cada carpeta del proyecto (`backend/` y `frontend/`) para manejar configuraciones.
-
-#### Backend (`backend/.env`)
-Crea el archivo `backend/.env` con el siguiente contenido:
-```env
-# Base de datos
-DB_USER=angel
-DB_PASSWORD=tu_password
+```ini
+# --- Base de Datos (PostgreSQL) ---
+DB_USER=postgres
+DB_PASSWORD=tu_password_segura
 DB_HOST=localhost
-DB_PORT=<PUERTO_DB>
+DB_PORT=5432
 DB_NAME=sistema_inventario
+DB_INTERNAL_PORT=5432
 
-# Seguridad
-SECRET_KEY=tu_secret_key_segura_para_production
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Redis Cache
+# --- Redis (Caché & Borradores) ---
 REDIS_HOST=localhost
-REDIS_PORT=puerto_redis
+REDIS_PORT=6379
+REDIS_INTERNAL_PORT=6379
 REDIS_DB=0
-# REDIS_PASSWORD=tu_password 
-```
+REDIS_LOCATION=redis://127.0.0.1:6379/1
 
-#### Frontend (`frontend/.env`)
-Crea el archivo `frontend/.env`:
-```env
-# Django 
-DJANGO_SECRET_KEY=tu_django_secret_key_segura
+# --- Backend (FastAPI) ---
+SECRET_KEY=tu_clave_secreta_backend
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+BACKEND_PORT=8000
+BACKEND_INTERNAL_PORT=8000
+
+# --- Frontend (Django) ---
+DJANGO_SECRET_KEY=tu_clave_secreta_django
 DEBUG=True
-
-# Backend 
-BACKEND_URL=http://127.0.0.1:<PUERTO_BACKEND>
-
-# Redis (Sesiones)
-REDIS_LOCATION=redis://127.0.0.1:<PUERTO_REDIS>/1
+FRONTEND_PORT=3000
+FRONTEND_INTERNAL_PORT=3000
+BACKEND_URL=http://127.0.0.1:8000
 ```
 
-### 3. Ejecutar el Proyecto
+> **Nota:** Al ejecutar con Docker, los hosts (`DB_HOST`, `REDIS_HOST`, `BACKEND_URL`) se configurarán automáticamente para usar los nombres de servicio internos (`db`, `redis`, `backend`), por lo que no necesitas cambiar esto para desarrollo local en contenedores. El archivo `docker-compose.yml` se encarga de inyectar estas variables.
 
-#### Backend (API)
-En la terminal del backend:
+### 3. Ejecutar el Proyecto con Docker
+
+Para iniciar toda la aplicación (Base de datos, Redis, Backend y Frontend):
+
 ```bash
-# Puerto Backend
-fastapi dev app/main.py --port <PUERTO_BACKEND>
+docker-compose up --build
 ```
 
-#### Frontend (Web App)
-En la terminal del frontend:
+Esto levantará los siguientes servicios:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Documentación API (Swagger)**: http://localhost:8000/docs
+- **Base de Datos**: Puerto 5432 (accesible desde localhost)
+- **Redis**: Puerto 6379 (accesible desde localhost)
+
+### 4. Acceso Inicial
+
+- **Usuario Admin por defecto**: (Si ya tienes una base de datos restaurada)
+- **Restaurar Datos**:
+  Si necesitas cargar datos iniciales (usuarios, productos), puedes usar los scripts incluidos:
+
+  ```bash
+  # Restaurar usuarios y sucursales
+  docker-compose exec backend python gestor_usuarios.py load
+  
+  # Restaurar productos y categorías
+  docker-compose exec backend python gestor_respaldos.py load
+  ```
+
+
+
+## Estructura del Proyecto
+
+- `backend/`: API RESTful con FastAPI.
+- `frontend/`: Interfaz de usuario con Django.
+- `docker-compose.yml`: Orquestación de contenedores.
+- `.env`: Variables de entorno compartidas.
+
+## Scripts de Utilidad
+
+El proyecto incluye scripts en la carpeta `backend/` para gestión de datos:
+- `gestor_respaldos.py`: Respaldar/Restaurar Productos y Categorías.
+- `gestor_usuarios.py`: Respaldar/Restaurar Usuarios y Sucursales.
+
+Para crear un nuevo respaldo (dump) desde dentro del contenedor:
 ```bash
-# Puerto Frontend
-python manage.py runserver <PUERTO_FRONTEND>
+docker-compose exec backend python gestor_usuarios.py
 ```
-
-
-
-##  Estructura del Proyecto
-
-```
-sistema_inventario/
-├── backend/                # API FastAPI
-│   ├── app/
-│   │   ├── routers/        # Endpoints 
-│   │   ├── crud.py
-│   │   ├── models.py
-│   │   └── schemas.py
-│   └── ...
-│
-└── frontend/               # Cliente Django
-    ├── core/               # Configuración Django
-    └── web/                # Aplicación principal
-        ├── templates/      # HTML 
-        ├── views.py        # Lógica de consumo de API
-        └── ...
-```
-
-##  Documentación API
-Una vez corriendo el backend, visita:
-*   [http://127.0.0.1:<PUERTO_BACKEND>/docs](http://127.0.0.1:<PUERTO_BACKEND>/docs)
-
-##  Acceso Web
-Una vez corriendo el frontend, visita:
-*   [http://127.0.0.1:<PUERTO_FRONTEND>/](http://127.0.0.1:<PUERTO_FRONTEND>/)
+Esto generará un archivo `.json` en el volumen del backend.
