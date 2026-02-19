@@ -15,6 +15,42 @@
         background-color: #f8f9fa;
         cursor: pointer;
     }
+    
+    /* Fluent Success Modal Styles */
+    #successModal .modal-content {
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        border: none;
+        text-align: center;
+        padding: 30px;
+    }
+    .success-icon-container {
+        width: 80px;
+        height: 80px;
+        background-color: #d1e7dd;
+        color: #0f5132;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px auto;
+        font-size: 40px;
+        animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn {
+        0% { transform: scale(0); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .fluent-title {
+        font-weight: 600;
+        font-size: 1.5rem;
+        color: #212529;
+        margin-bottom: 10px;
+    }
+    .fluent-text {
+        color: #6c757d;
+        margin-bottom: 25px;
+    }
 
 </style>
 
@@ -215,6 +251,25 @@
         </div>
 </fluent-card>
 
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="success-icon-container">
+        <i class='bx bx-check'></i>
+      </div>
+      <h3 class="fluent-title">¡Documento Creado!</h3>
+      <p class="fluent-text">La operación se ha registrado exitosamente.</p>
+      
+      <div class="d-grid gap-2">
+        <button type="button" class="btn btn-primary btn-lg" id="btnRedirect">
+            Aceptar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
     document.addEventListener("DOMContentLoaded", function() {
   
@@ -226,10 +281,14 @@
         // autoguardado
         function debounce(func, wait) {
             let timeout;
-            return function(...args) {
+            const executedFunction = function(...args) {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => func.apply(this, args), wait);
             };
+            executedFunction.cancel = function() {
+                clearTimeout(timeout);
+            };
+            return executedFunction;
         }
 
         
@@ -665,6 +724,9 @@
 
         // --- Guardar Documento ---
         document.getElementById("btnSaveDocument").addEventListener("click", function() {
+           
+            if (autoSaveDraft.cancel) autoSaveDraft.cancel();
+
             if (detalles.length === 0) {
                 alert("Debe agregar productos al detalle.");
                 return;
@@ -717,8 +779,23 @@
             .then(data => {
                 if (data.status === "success") {
                     fetch("{% url 'api_borrador' %}", { method: "DELETE", headers: {"X-CSRFToken": "{{ csrf_token }}"} });
-                    alert("Documento creado exitosamente!");
-                    window.location.href = data.redirect_url;
+                    
+                    // mostrar Fluent Modal
+                    const modalEl = document.getElementById('successModal');
+                    const modal = new bootstrap.Modal(modalEl);
+                    const btnRedirect = document.getElementById('btnRedirect');
+                    
+                    btnRedirect.onclick = function() {
+                        window.location.href = data.redirect_url;
+                    };
+                    
+                    modal.show();
+                    
+                    
+                    setTimeout(() => {
+                         window.location.href = data.redirect_url;
+                    }, 2000);
+
                 } else {
                     alert("Error: " + data.message);
                 }
