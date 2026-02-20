@@ -13,7 +13,7 @@ def inicializar_stock(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     nuevo_inventario = crud.create_inventario(db=db, inventario=inventario)
     if nuevo_inventario == "ExcedeStockMaximo":
@@ -100,7 +100,7 @@ def ajustar_stock(
     """
     Ajuste manual de stock, ubicación o niveles de alerta.
     """
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
     db_inventario = crud.update_inventario(db, inventario_id=inventario_id, inventario_update=inventario_update)
     if db_inventario == "ExcedeStockMaximo":
@@ -115,7 +115,7 @@ def eliminar_inventario(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_active_user)
 ):
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No tienes permisos para esta acción")
         
     resultado = crud.delete_inventario(db, inventario_id=inventario_id)

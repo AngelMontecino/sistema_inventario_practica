@@ -39,7 +39,7 @@
                         </ul>
                     {% endif %}
                     
-                    {% if request.session.id_usuario == estado_caja.info.usuario_id or request.session.rol == 'ADMIN' %}
+                    {% if request.session.id_usuario == estado_caja.info.usuario_id or request.session.rol in 'ADMIN,SUPERADMIN' %}
                          <fluent-button appearance="accent" class="w-100" style="--accent-fill-rest: #dc3545;" onclick="window.location.href='{% url 'cerrar_caja' %}'">Cerrar Caja Pendiente</fluent-button>
                     {% else %}
                          <div class="d-grid">
@@ -66,7 +66,7 @@
                     </ul>
                     {% endif %}
                     
-                    {% if request.session.id_usuario == estado_caja.info.usuario_id or request.session.rol == 'ADMIN' %}
+                    {% if request.session.id_usuario == estado_caja.info.usuario_id or request.session.rol in 'ADMIN,SUPERADMIN' %}
                         <fluent-button appearance="accent" class="w-100" style="--accent-fill-rest: #dc3545;" onclick="window.location.href='{% url 'cerrar_caja' %}'">Cerrar Caja</fluent-button>
                     {% else %}
                         <div class="alert alert-info py-2 small">

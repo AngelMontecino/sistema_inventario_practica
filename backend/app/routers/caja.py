@@ -71,7 +71,7 @@ def cerrar_caja(
              raise HTTPException(status_code=400, detail="No hay caja abierta para cerrar")
 
     # Validar Propiedad
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         if apertura_target.id_usuario != current_user.id_usuario:
              raise HTTPException(status_code=403, detail="No tienes permisos para cerrar una caja abierta por otro usuario")
 
@@ -115,13 +115,13 @@ def registrar_movimiento(
     
     # Asegurar que el usuario registra en su sucursal (o permitir admin cambiar)
     # Por ahora forzamos sucursal del usuario logueado si no coincide 
-    if movimiento.id_sucursal != current_user.id_sucursal and current_user.rol != models.TipoRol.ADMIN:
+    if movimiento.id_sucursal != current_user.id_sucursal and current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         raise HTTPException(status_code=403, detail="No puede registrar movimientos en otra sucursal")
     
     # Forzar ID de usuario desde el token
     movimiento.id_usuario = current_user.id_usuario
     # Forzar sucursal si no es admin 
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         movimiento.id_sucursal = current_user.id_sucursal
         
     resultado = crud.registrar_movimiento_caja(db=db, movimiento=movimiento)
@@ -164,7 +164,7 @@ def obtener_detalle_sesion(
     if not detalle:
          raise HTTPException(status_code=404, detail="Sesión de caja no encontrada")
     
-    if current_user.rol != models.TipoRol.ADMIN:
+    if current_user.rol not in [models.TipoRol.ADMIN, models.TipoRol.SUPERADMIN]:
         # Recuperar objeto apertura para chequear sucursal
         # (El crud ya filtra, pero el detalle checa permissions extra)
         apertura = crud.get_movimiento(db, id_apertura)
